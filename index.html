@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PI Confidence Vote v1.0 🗳️</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗳️</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#dff0eb;--card:#fff;--teal:#2d7a6e;--tl:#e0f2ef;--tm:#4a9e90;
+  --or:#e8a96a;--ord:#d4895a;--tx:#1a2e2b;--mu:#6b8c87;--bo:#c8e0db;
+  --r:18px;--sh:0 4px 24px rgba(45,122,110,.10);
+  --v1:#e05252;--v2:#e88c4a;--v3:#c8a000;--v4:#7ec87a;--v5:#3aab6d;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);min-height:100vh;color:var(--tx);}
+
+.spin{width:36px;height:36px;border:4px solid var(--bo);border-top-color:var(--teal);border-radius:50%;animation:sp .8s linear infinite;margin:0 auto 12px;}
+@keyframes sp{to{transform:rotate(360deg)}}
+#loadingBox{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:8px;color:var(--mu);font-size:14px;}
+
+.screen{display:none;}
+.screen.active{display:flex;flex-direction:column;align-items:center;min-height:100vh;padding:36px 16px 60px;}
+#homeScreen{justify-content:center;}
+
+.card{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);padding:38px 32px;width:100%;max-width:520px;}
+.logo{width:68px;height:68px;background:linear-gradient(135deg,#5ba8a0,#2d7a6e);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 14px;box-shadow:0 6px 20px rgba(45,122,110,.25);}
+.app-title{font-family:'Nunito',sans-serif;font-size:28px;font-weight:900;text-align:center;letter-spacing:-.5px;}
+.app-sub{color:var(--mu);font-size:14px;text-align:center;margin:5px 0 10px;}
+.version-badge{display:inline-block;background:var(--teal);color:#fff;font-family:'Nunito',sans-serif;font-weight:800;font-size:11px;padding:3px 10px;border-radius:20px;margin-bottom:22px;letter-spacing:.5px;}
+
+.qs{background:var(--tl);border:1.5px solid var(--bo);border-radius:14px;padding:20px;margin-bottom:12px;}
+.qs-t{font-family:'Nunito',sans-serif;font-weight:800;font-size:16px;color:var(--teal);margin-bottom:3px;}
+.qs-s{color:var(--mu);font-size:12px;margin-bottom:13px;}
+
+.col{background:var(--card);border:1.5px solid var(--bo);border-radius:14px;margin-bottom:10px;overflow:hidden;}
+.col-h{padding:14px 17px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:800;font-size:14px;user-select:none;}
+.col-h .lft{display:flex;align-items:center;gap:8px;}
+.col-b{padding:0 17px 15px;display:none;}
+.col.open .col-b{display:block;}
+.chev{font-size:12px;color:var(--mu);transition:transform .2s;}
+.col.open .chev{transform:rotate(90deg);}
+
+.field{width:100%;padding:12px 15px;border:1.5px solid var(--bo);border-radius:11px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--tx);background:#fff;outline:none;transition:border-color .2s;margin-bottom:9px;}
+.field:focus{border-color:var(--tm);}
+.field::placeholder{color:#b0c9c5;}
+
+.btn{width:100%;padding:13px;border:none;border-radius:11px;font-family:'Nunito',sans-serif;font-weight:800;font-size:15px;cursor:pointer;transition:background .2s,transform .1s;display:flex;align-items:center;justify-content:center;gap:6px;}
+.btn:hover{transform:translateY(-1px);}
+.btn:active{transform:translateY(0);}
+.btn:disabled{opacity:.5;pointer-events:none;}
+.btn-or{background:var(--or);color:#fff;}
+.btn-or:hover{background:var(--ord);}
+.btn-gh{background:none;border:1.5px solid var(--bo);color:var(--tx);}
+.btn-gh:hover{background:var(--tl);}
+
+.lbl{font-family:'Nunito',sans-serif;font-weight:700;font-size:12px;color:var(--teal);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;display:block;}
+.fg{margin-bottom:17px;}
+.team-list{display:flex;flex-direction:column;gap:7px;margin-bottom:8px;}
+.trow{display:flex;gap:7px;align-items:center;}
+.trow .field{margin-bottom:0;flex:1;}
+.btnx{width:32px;height:32px;border-radius:9px;background:#fce8e8;border:none;color:#e05252;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.btnx:hover{background:#f5c5c5;}
+.btnadd{padding:9px 14px;background:var(--tl);border:1.5px dashed var(--tm);border-radius:9px;color:var(--teal);font-family:'Nunito',sans-serif;font-weight:700;font-size:13px;cursor:pointer;width:100%;text-align:center;}
+.btnadd:hover{background:#c8e8e2;}
+.btnbk{background:none;border:none;color:var(--mu);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;margin-bottom:16px;display:flex;align-items:center;gap:5px;padding:0;}
+.btnbk:hover{color:var(--teal);}
+
+/* BOARD */
+#boardScreen{padding-top:24px;}
+.bhdr{width:100%;max-width:1200px;display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-bottom:20px;}
+.btit h1{font-family:'Nunito',sans-serif;font-weight:900;font-size:22px;}
+.btit p{color:var(--mu);font-size:13px;margin-top:3px;}
+
+.share-box{background:var(--card);border:1.5px solid var(--bo);border-radius:14px;padding:14px 16px;min-width:280px;max-width:380px;}
+.share-box-title{font-family:'Nunito',sans-serif;font-weight:800;font-size:11px;color:var(--teal);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
+.share-row{display:flex;gap:8px;align-items:center;margin-bottom:7px;}
+.share-code{font-family:'Courier New',monospace;font-weight:900;font-size:20px;letter-spacing:4px;color:var(--teal);background:var(--tl);padding:7px 12px;border-radius:8px;flex:1;text-align:center;}
+.copy-btn{padding:6px 12px;background:var(--teal);color:#fff;border:none;border-radius:8px;font-family:'Nunito',sans-serif;font-weight:700;font-size:12px;cursor:pointer;white-space:nowrap;transition:background .2s;}
+.copy-btn:hover{background:var(--tm);}
+.copy-btn.done{background:var(--v5);}
+.share-hint{font-size:11px;color:var(--mu);line-height:1.5;}
+
+.voter-banner{width:100%;max-width:1200px;background:var(--teal);color:#fff;border-radius:12px;padding:12px 18px;display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:8px;}
+.voter-banner-name{font-family:'Nunito',sans-serif;font-weight:800;font-size:15px;}
+.voter-banner-sub{font-size:12px;opacity:.8;margin-top:2px;}
+
+.bgrid{width:100%;max-width:1200px;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-bottom:18px;}
+
+.vc-card{background:var(--card);border-radius:14px;box-shadow:var(--sh);overflow:hidden;}
+.vc-card.art-card-full{grid-column:1/-1;}
+.vch{padding:12px 15px;display:flex;align-items:center;justify-content:space-between;}
+.vch h3{font-family:'Nunito',sans-serif;font-weight:900;font-size:13px;color:#fff;text-transform:uppercase;letter-spacing:.5px;}
+.vch .bdg{background:rgba(255,255,255,.32);color:#fff;font-family:'Nunito',sans-serif;font-weight:800;font-size:11px;padding:3px 9px;border-radius:20px;}
+.team-hdr{background:#f5a623;}
+.art-hdr{background:linear-gradient(135deg,#e8a020,#f5c842);}
+.vcb{padding:14px 15px;}
+
+.bars{display:flex;gap:5px;align-items:flex-end;height:52px;margin-bottom:10px;}
+.bcol{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;}
+.bw{width:100%;background:#f0f4f3;border-radius:5px;height:36px;display:flex;align-items:flex-end;overflow:hidden;}
+.bar{width:100%;border-radius:5px;transition:height .5s cubic-bezier(.34,1.56,.64,1);}
+.blbl{font-size:9px;font-weight:700;color:var(--mu);}
+.bnum{font-size:9px;font-weight:600;color:var(--tx);}
+.avg-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0 10px;border-bottom:1.5px solid var(--bo);margin-bottom:10px;}
+.avg-l{font-size:11px;color:var(--mu);}
+.avg-v{font-family:'Nunito',sans-serif;font-weight:900;font-size:20px;border-radius:8px;padding:2px 10px;transition:color .5s,background .5s;}
+
+.vote-section{border-top:1.5px solid var(--bo);padding-top:10px;}
+.vote-section-label{font-family:'Nunito',sans-serif;font-weight:700;font-size:11px;color:var(--mu);margin-bottom:7px;text-transform:uppercase;letter-spacing:.4px;}
+.inline-btns{display:flex;gap:6px;justify-content:center;}
+.ivb{flex:1;height:48px;border-radius:11px;border:2.5px solid transparent;font-family:'Nunito',sans-serif;font-weight:900;font-size:17px;cursor:pointer;transition:transform .15s,border-color .15s,box-shadow .15s;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1;gap:1px;}
+.ivb:hover{transform:scale(1.1);box-shadow:0 3px 10px rgba(0,0,0,.12);}
+.ivb.voted-this{border-color:var(--tx)!important;transform:scale(1.13);box-shadow:0 5px 16px rgba(0,0,0,.15);}
+.ivb.s1{background:#fde8e8;color:var(--v1);}
+.ivb.s2{background:#fdf0e0;color:var(--v2);}
+.ivb.s3{background:#fefae0;color:var(--v3);}
+.ivb.s4{background:#e8f8e8;color:var(--v4);}
+.ivb.s5{background:#d8f5e8;color:var(--v5);}
+.ivb-em{font-size:8px;}
+.vote-status{font-size:11px;color:var(--mu);text-align:center;margin-top:7px;height:14px;}
+.vote-status.ok{color:var(--v5);font-weight:700;}
+
+.art-bars{display:flex;gap:9px;align-items:flex-end;height:68px;margin-bottom:12px;}
+.acol{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;}
+.abw{width:100%;background:#f0f4f3;border-radius:7px;height:50px;display:flex;align-items:flex-end;overflow:hidden;}
+.abar{width:100%;border-radius:7px;transition:height .5s cubic-bezier(.34,1.56,.64,1);}
+.albl{font-size:10px;font-weight:700;color:var(--mu);}
+.anum{font-size:10px;font-weight:600;color:var(--tx);}
+.art-avg-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0 12px;border-bottom:1.5px solid var(--bo);margin-bottom:12px;}
+.art-avg-l{font-family:'Nunito',sans-serif;font-weight:700;font-size:13px;color:var(--mu);}
+.art-avg-v{font-family:'Nunito',sans-serif;font-weight:900;font-size:32px;border-radius:10px;padding:3px 15px;transition:color .5s,background .5s;}
+
+.err-box{background:#fde8e8;border:1.5px solid #f5c5c5;border-radius:10px;padding:12px 15px;color:#b03030;font-size:13px;margin-bottom:10px;display:none;}
+.err-box.show{display:block;}
+
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%) translateY(90px);background:var(--tx);color:#fff;padding:10px 20px;border-radius:10px;font-family:'Nunito',sans-serif;font-weight:700;font-size:13px;z-index:9999;transition:transform .3s cubic-bezier(.34,1.56,.64,1);pointer-events:none;max-width:92vw;text-align:center;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+
+.footer{margin-top:20px;color:var(--mu);font-size:12px;text-align:center;}
+
+@media(max-width:640px){
+  .card{padding:22px 16px;}
+  .bgrid{grid-template-columns:1fr;}
+  .vc-card.art-card-full{grid-column:auto;}
+  .bhdr{flex-direction:column;}
+  .share-box{min-width:0;width:100%;}
+}
+</style>
+</head>
+<body>
+
+<div id="loadingBox"><div class="spin"></div><p>Connecting…</p></div>
+<div class="toast" id="toast"></div>
+
+<!-- HOME -->
+<div class="screen" id="homeScreen">
+  <div class="card">
+    <div class="logo">🗳️</div>
+    <h1 class="app-title">PI Confidence Vote</h1>
+    <p class="app-sub">Real-time PI Planning confidence votes for agile teams</p>
+    <div style="text-align:center;"><span class="version-badge">v1.0.0 — March 2026</span></div>
+
+    <div class="qs">
+      <div class="qs-t">⚡ Host a Session</div>
+      <p class="qs-s">Enter your name to configure and create a new voting session.</p>
+      <input class="field" type="text" id="hostNameInput" placeholder="Your name (as host)" />
+      <button class="btn btn-or" onclick="goToConfig()">Configure &amp; Create Session →</button>
+    </div>
+
+    <div class="col" id="joinCol">
+      <div class="col-h" onclick="toggleCol('joinCol')">
+        <span class="lft">👥 <span>Join with Session ID</span></span>
+        <span class="chev">›</span>
+      </div>
+      <div class="col-b">
+        <div class="err-box" id="joinErr"></div>
+        <input class="field" type="text" id="joinIdInput" placeholder="Session ID (e.g. AB12CD)"
+          style="text-transform:uppercase;letter-spacing:3px;font-family:'Courier New',monospace;font-size:18px;text-align:center;" maxlength="6"
+          oninput="this.value=this.value.toUpperCase()" />
+        <input class="field" type="text" id="joinNameInput" placeholder="Your name" />
+        <button class="btn btn-or" id="joinBtn" onclick="joinSession()">Join Session →</button>
+      </div>
+    </div>
+
+    <div class="col" id="howCol">
+      <div class="col-h" onclick="toggleCol('howCol')">
+        <span class="lft">❓ <span>How does this work?</span></span>
+        <span class="chev">›</span>
+      </div>
+      <div class="col-b">
+        <p style="font-size:13px;color:var(--mu);line-height:1.8;">
+          1. <strong>Host</strong> creates a session with ART + team names.<br>
+          2. Share the <strong>link or Session ID</strong> with all participants.<br>
+          3. Everyone enters the ID + their name and joins.<br>
+          4. Click any <strong>1–5 button</strong> on a team or ART card to vote — team and ART votes are independent.<br>
+          5. Results update <strong>live</strong> for everyone. Votes are anonymous.
+        </p>
+      </div>
+    </div>
+    <p class="footer">v1.0.0 · March 2026 · Built with ❤️ for agile teams</p>
+  </div>
+</div>
+
+<!-- CONFIG -->
+<div class="screen" id="configScreen">
+  <div class="card" style="max-width:530px;">
+    <button class="btnbk" onclick="showScreen('homeScreen')">← Back</button>
+    <h2 style="font-family:'Nunito',sans-serif;font-weight:900;font-size:20px;margin-bottom:3px;">Configure Session</h2>
+    <p style="color:var(--mu);font-size:13px;margin-bottom:20px;">Set your ART name and add all participating teams.</p>
+    <div class="fg"><label class="lbl">Host Name</label><input class="field" type="text" id="cfgHost" placeholder="Your name" /></div>
+    <div class="fg"><label class="lbl">ART Name</label><input class="field" type="text" id="cfgArt" placeholder="ART Name" /></div>
+    <div class="fg">
+      <label class="lbl">Teams</label>
+      <div class="team-list" id="teamList"></div>
+      <button class="btnadd" onclick="addTeam()">+ Add Team</button>
+    </div>
+    <button class="btn btn-or" id="createBtn" onclick="createSession()">🚀 Create Session</button>
+  </div>
+</div>
+
+<!-- BOARD -->
+<div class="screen" id="boardScreen">
+  <div class="bhdr">
+    <div class="btit">
+      <h1 id="boardTitle">ART Name — PI Confidence Vote</h1>
+      <p id="boardSub">Voting in progress…</p>
+    </div>
+    <div class="share-box" id="shareBox" style="display:none;">
+      <div class="share-box-title">📤 Share with participants</div>
+      <div class="share-row">
+        <div class="share-code" id="sidDisplay">——</div>
+        <button class="copy-btn" id="copyLinkBtn" onclick="copyLink()">Copy Link</button>
+      </div>
+      <p class="share-hint" id="shareHint">Loading link…</p>
+    </div>
+  </div>
+
+  <div class="voter-banner">
+    <div>
+      <div class="voter-banner-name" id="voterBannerName">—</div>
+      <div class="voter-banner-sub">Click any score button on a card to cast your vote — votes are anonymous</div>
+    </div>
+    <button class="btn btn-gh" style="padding:7px 14px;font-size:12px;width:auto;background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);color:#fff;" onclick="switchUser()">Switch User</button>
+  </div>
+
+  <div class="bgrid" id="bgrid"></div>
+</div>
+
+<!-- Firebase SDKs -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { getDatabase, ref, set, get, onValue, runTransaction } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+
+// ── Firebase config ──
+const firebaseConfig = {
+  apiKey: "AIzaSyAfijlq8zBdtcr69YP0zx5-nKbPhW8Ovvs",
+  authDomain: "pi-confidence-vote.firebaseapp.com",
+  databaseURL: "https://pi-confidence-vote-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "pi-confidence-vote",
+  storageBucket: "pi-confidence-vote.firebasestorage.app",
+  messagingSenderId: "805855420590",
+  appId: "1:805855420590:web:09d4889c1dbb7238d78d3f"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getDatabase(app);
+
+// ── State ──
+let activeSid    = null;
+let currentUser  = null;
+let isHost       = false;
+let sessionData  = null;
+let unsubscribe  = null;
+
+const BC = ['','#e05252','#e88c4a','#c8a000','#7ec87a','#3aab6d'];
+const EM = ['','😟','😕','😐','🙂','😄'];
+
+// ── Expose globals needed by onclick handlers ──
+window.toggleCol    = toggleCol;
+window.goToConfig   = goToConfig;
+window.addTeam      = addTeam;
+window.createSession= createSession;
+window.joinSession  = joinSession;
+window.showScreen   = showScreen;
+window.switchUser   = switchUser;
+window.copyLink     = copyLink;
+window.castVote     = castVote;
+
+// ── Init ──
+document.addEventListener('DOMContentLoaded', async () => {
+  // Check URL for ?join=XXXX or #join/XXXX
+  const params = new URLSearchParams(location.search);
+  let joinId = params.get('join');
+  if (!joinId) {
+    const m = location.hash.match(/^#join\/([A-Z0-9]{6})$/);
+    if (m) joinId = m[1];
+  }
+
+  document.getElementById('loadingBox').style.display = 'none';
+
+  if (joinId) {
+    const sid = joinId.toUpperCase();
+    const snap = await get(ref(db, `sessions/${sid}`));
+    if (snap.exists()) {
+      document.getElementById('joinIdInput').value = sid;
+      document.getElementById('joinCol').classList.add('open');
+      showScreen('homeScreen');
+      toast('Session found! Enter your name to join.');
+    } else {
+      showScreen('homeScreen');
+      showErr('joinErr', `Session "${sid}" not found. Ask the host for the correct link.`);
+      document.getElementById('joinCol').classList.add('open');
+    }
+  } else {
+    showScreen('homeScreen');
+  }
+});
+
+// ── Utils ──
+function uid() { return Math.random().toString(36).slice(2,8).toUpperCase(); }
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function toggleCol(id) { document.getElementById(id).classList.toggle('open'); }
+
+function toast(m, d=2600) {
+  const t = document.getElementById('toast');
+  t.textContent = m; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), d);
+}
+
+function showErr(id, m) {
+  const e = document.getElementById(id);
+  e.textContent = m; e.classList.add('show');
+  setTimeout(() => e.classList.remove('show'), 6000);
+}
+
+function sStyle(v) {
+  if (!v || v === '—') return {bg:'#f0f4f3', c:'#6b8c87'};
+  const n = parseFloat(v);
+  if (n < 1.5) return {bg:'#fde8e8', c:'#e05252'};
+  if (n < 2.5) return {bg:'#fdf0e0', c:'#e88c4a'};
+  if (n < 3.5) return {bg:'#fefae0', c:'#c8a000'};
+  if (n < 4.5) return {bg:'#e8f8e8', c:'#7ec87a'};
+  return {bg:'#d8f5e8', c:'#3aab6d'};
+}
+
+function buildShareUrl(sid) {
+  return `${location.origin}${location.pathname}?join=${sid}`;
+}
+
+// ── Home / Config ──
+function goToConfig() {
+  const n = document.getElementById('hostNameInput').value.trim();
+  if (!n) { toast('Please enter your name!'); return; }
+  document.getElementById('cfgHost').value = n;
+  document.getElementById('teamList').innerHTML = '';
+  addTeam('Team 1'); addTeam('Team 2');
+  showScreen('configScreen');
+}
+
+function addTeam(name = '') {
+  const list = document.getElementById('teamList');
+  const id   = uid();
+  const row  = document.createElement('div');
+  row.className = 'trow'; row.dataset.id = id;
+  const idx = list.children.length + 1;
+  row.innerHTML = `<input class="field" style="margin-bottom:0;" type="text" placeholder="Team ${idx}" value="${name}" /><button class="btnx" onclick="this.parentElement.remove()">×</button>`;
+  list.appendChild(row);
+}
+
+async function createSession() {
+  const host = document.getElementById('cfgHost').value.trim();
+  const art  = document.getElementById('cfgArt').value.trim();
+  if (!host) { toast('Enter your name!'); return; }
+  if (!art)  { toast('Enter ART name!'); return; }
+
+  const rows  = document.querySelectorAll('#teamList .trow');
+  const teams = [];
+  rows.forEach(r => {
+    const v = r.querySelector('input').value.trim();
+    if (v) teams.push({id: r.dataset.id, name: v});
+  });
+  if (!teams.length) { toast('Add at least one team!'); return; }
+
+  const btn = document.getElementById('createBtn');
+  btn.disabled = true; btn.textContent = 'Creating…';
+
+  const sid   = uid();
+  const votes = {};
+  teams.forEach(t => { votes[t.id] = {}; });
+  votes['ART'] = {};
+
+  const sessionObj = {
+    art, host, teams,
+    votes,
+    createdAt: Date.now()
+  };
+
+  try {
+    await set(ref(db, `sessions/${sid}`), sessionObj);
+  } catch(e) {
+    btn.disabled = false; btn.innerHTML = '🚀 Create Session';
+    toast('Error creating session: ' + e.message); return;
+  }
+
+  btn.disabled = false; btn.innerHTML = '🚀 Create Session';
+  activeSid = sid; currentUser = host; isHost = true;
+  openBoard(sid);
+}
+
+// ── Join ──
+async function joinSession() {
+  const sid  = document.getElementById('joinIdInput').value.trim().toUpperCase();
+  const name = document.getElementById('joinNameInput').value.trim();
+  if (!sid)  { showErr('joinErr', 'Enter a Session ID!'); return; }
+  if (!name) { showErr('joinErr', 'Enter your name!'); return; }
+
+  const btn = document.getElementById('joinBtn');
+  btn.disabled = true; btn.textContent = 'Joining…';
+
+  const snap = await get(ref(db, `sessions/${sid}`));
+  btn.disabled = false; btn.textContent = 'Join Session →';
+
+  if (!snap.exists()) {
+    showErr('joinErr', `⚠️ Session "${sid}" not found. Check the ID and try again.`);
+    return;
+  }
+
+  activeSid   = sid;
+  currentUser = name;
+  isHost      = (snap.val().host === name);
+  openBoard(sid);
+}
+
+function switchUser() {
+  if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+  showScreen('homeScreen');
+  document.getElementById('joinCol').classList.add('open');
+  if (activeSid) document.getElementById('joinIdInput').value = activeSid;
+}
+
+// ── Board ──
+function openBoard(sid) {
+  // Build static structure first
+  document.getElementById('boardTitle').textContent = '…';
+  document.getElementById('boardSub').textContent   = 'Connecting…';
+  document.getElementById('voterBannerName').textContent = '👤 ' + currentUser + (isHost ? ' (Host)' : '');
+
+  const sb = document.getElementById('shareBox');
+  if (isHost) {
+    sb.style.display = 'block';
+    document.getElementById('sidDisplay').textContent = sid;
+    const url = buildShareUrl(sid);
+    document.getElementById('shareHint').textContent = url;
+  } else {
+    sb.style.display = 'none';
+  }
+
+  showScreen('boardScreen');
+
+  // Subscribe to real-time updates
+  if (unsubscribe) unsubscribe();
+  const sessRef = ref(db, `sessions/${sid}`);
+  unsubscribe = onValue(sessRef, snap => {
+    if (!snap.exists()) { toast('Session ended.'); showScreen('homeScreen'); return; }
+    sessionData = snap.val();
+    document.getElementById('boardTitle').textContent = sessionData.art + ' — PI Confidence Vote';
+    document.getElementById('boardSub').textContent   = 'Voting in progress…';
+    renderBoard(sessionData);
+  });
+}
+
+function renderBoard(s) {
+  const grid = document.getElementById('bgrid');
+
+  // Build cards if not yet built or teams changed
+  const existingTeamIds = [...grid.querySelectorAll('.vc-card[data-tid]')].map(el => el.dataset.tid);
+  const newTeamIds      = s.teams.map(t => t.id);
+  const needRebuild     = JSON.stringify(existingTeamIds) !== JSON.stringify(newTeamIds);
+
+  if (needRebuild) buildCards(s);
+
+  // Update stats for each team
+  s.teams.forEach(t => {
+    const votes = votesArray(s.votes[t.id]);
+    updateTeamStats(t.id, votes);
+  });
+
+  // Update ART stats
+  const artVotes = votesArray(s.votes['ART']);
+  updateArtStats(artVotes);
+}
+
+// Firebase stores arrays as objects {voterKey: {score}} — convert
+function votesArray(obj) {
+  if (!obj) return [];
+  if (Array.isArray(obj)) return obj;
+  return Object.values(obj);
+}
+
+function buildCards(s) {
+  const grid = document.getElementById('bgrid');
+  grid.innerHTML = '';
+
+  s.teams.forEach(t => {
+    const card = document.createElement('div');
+    card.className = 'vc-card'; card.id = 'card_'+t.id; card.dataset.tid = t.id;
+    card.innerHTML = `
+      <div class="vch team-hdr">
+        <h3>${t.name}</h3>
+        <span class="bdg" id="bdg_${t.id}">0 votes</span>
+      </div>
+      <div class="vcb">
+        <div class="bars">
+          ${[1,2,3,4,5].map(i=>`<div class="bcol"><div class="bnum" id="bn_${t.id}_${i}">0</div><div class="bw"><div class="bar" id="b_${t.id}_${i}" style="height:0%;background:${BC[i]}"></div></div><div class="blbl">${i}</div></div>`).join('')}
+        </div>
+        <div class="avg-row">
+          <span class="avg-l">Team Average</span>
+          <span class="avg-v" id="avg_${t.id}">—</span>
+        </div>
+        <div class="vote-section">
+          <div class="vote-section-label">Your vote for this team:</div>
+          <div class="inline-btns">
+            ${[1,2,3,4,5].map(i=>`<button class="ivb s${i}" id="ivb_${t.id}_${i}" onclick="castVote('${t.id}',${i})">${i}<span class="ivb-em">${EM[i]}</span></button>`).join('')}
+          </div>
+          <div class="vote-status" id="vs_${t.id}"></div>
+        </div>
+      </div>`;
+    grid.appendChild(card);
+  });
+
+  // ART card — full width
+  const artCard = document.createElement('div');
+  artCard.className = 'vc-card art-card-full'; artCard.id = 'card_ART'; artCard.dataset.tid = 'ART';
+  artCard.innerHTML = `
+    <div class="vch art-hdr">
+      <h3>🗳️ PI Planning — ART Level Confidence Vote</h3>
+      <span class="bdg" id="bdg_ART">0 votes</span>
+    </div>
+    <div class="vcb">
+      <div class="art-bars">
+        ${[1,2,3,4,5].map(i=>`<div class="acol"><div class="anum" id="an_${i}">0</div><div class="abw"><div class="abar" id="ab_${i}" style="height:0%;background:${BC[i]}"></div></div><div class="albl">${['NO CONF.','LITTLE','GOOD','HIGH','V.HIGH'][i-1]}</div></div>`).join('')}
+      </div>
+      <div class="art-avg-row">
+        <span class="art-avg-l">Overall ART Average</span>
+        <span class="art-avg-v" id="avg_ART">—</span>
+      </div>
+      <div class="vote-section">
+        <div class="vote-section-label">Your vote for the overall PI plan (ART level):</div>
+        <div class="inline-btns">
+          ${[1,2,3,4,5].map(i=>`<button class="ivb s${i}" id="ivb_ART_${i}" onclick="castVote('ART',${i})">${i}<span class="ivb-em">${EM[i]}</span></button>`).join('')}
+        </div>
+        <div class="vote-status" id="vs_ART"></div>
+      </div>
+    </div>`;
+  grid.appendChild(artCard);
+}
+
+function updateTeamStats(tid, votes) {
+  const tot = votes.length;
+  const bdg = document.getElementById('bdg_'+tid);
+  if (bdg) bdg.textContent = tot + ' vote' + (tot !== 1 ? 's' : '');
+
+  const cnt = [0,0,0,0,0];
+  votes.forEach(v => cnt[v.score-1]++);
+  const mx = Math.max(...cnt, 1);
+
+  [1,2,3,4,5].forEach(i => {
+    const bar = document.getElementById(`b_${tid}_${i}`);
+    const num = document.getElementById(`bn_${tid}_${i}`);
+    if (bar) bar.style.height = Math.round(cnt[i-1]/mx*100) + '%';
+    if (num) num.textContent  = cnt[i-1];
+  });
+
+  const ae = document.getElementById('avg_'+tid);
+  if (ae) {
+    if (tot > 0) {
+      const a = (votes.reduce((s,v) => s+v.score, 0) / tot).toFixed(1);
+      ae.textContent = a;
+      const c = sStyle(a); ae.style.background = c.bg; ae.style.color = c.c;
+    } else {
+      ae.textContent = '—'; ae.style.background = '#f0f4f3'; ae.style.color = '#6b8c87';
+    }
+  }
+
+  highlightMyVote(tid, votes);
+}
+
+function updateArtStats(votes) {
+  const tot = votes.length;
+  const bdg = document.getElementById('bdg_ART');
+  if (bdg) bdg.textContent = tot + ' vote' + (tot !== 1 ? 's' : '');
+
+  const cnt = [0,0,0,0,0];
+  votes.forEach(v => cnt[v.score-1]++);
+  const mx = Math.max(...cnt, 1);
+
+  [1,2,3,4,5].forEach(i => {
+    const bar = document.getElementById('ab_'+i);
+    const num = document.getElementById('an_'+i);
+    if (bar) bar.style.height = Math.round(cnt[i-1]/mx*100) + '%';
+    if (num) num.textContent  = cnt[i-1];
+  });
+
+  const ae = document.getElementById('avg_ART');
+  if (ae) {
+    if (tot > 0) {
+      const a = (votes.reduce((s,v) => s+v.score, 0) / tot).toFixed(1);
+      ae.textContent = a;
+      const c = sStyle(a); ae.style.background = c.bg; ae.style.color = c.c;
+    } else {
+      ae.textContent = '—'; ae.style.background = 'transparent'; ae.style.color = '#6b8c87';
+    }
+  }
+
+  highlightMyVote('ART', votes);
+}
+
+function highlightMyVote(tid, votes) {
+  const myVote = votes.find(v => v.voter === currentUser);
+  [1,2,3,4,5].forEach(i => {
+    const btn = document.getElementById(`ivb_${tid}_${i}`);
+    if (btn) btn.classList.toggle('voted-this', !!(myVote && myVote.score === i));
+  });
+  const vs = document.getElementById('vs_'+tid);
+  if (vs) {
+    if (myVote) { vs.textContent = '✓ You voted ' + myVote.score; vs.className = 'vote-status ok'; }
+    else        { vs.textContent = 'No vote yet'; vs.className = 'vote-status'; }
+  }
+}
+
+async function castVote(tid, score) {
+  if (!activeSid || !currentUser) { toast('Please join a session first!'); return; }
+
+  // Use voter's name as key so each person has exactly one vote per target
+  const voterKey = currentUser.replace(/[.#$/\[\]]/g, '_'); // sanitize for Firebase key
+  const voteRef  = ref(db, `sessions/${activeSid}/votes/${tid}/${voterKey}`);
+
+  try {
+    await set(voteRef, { voter: currentUser, score });
+    const tname = tid === 'ART'
+      ? (sessionData?.art || 'ART') + ' (ART level)'
+      : sessionData?.teams?.find(t => t.id === tid)?.name || tid;
+    toast(`Voted ${score} for ${tname} ✅`);
+  } catch(e) {
+    toast('Error saving vote: ' + e.message);
+  }
+}
+
+function copyLink() {
+  const sid = document.getElementById('sidDisplay').textContent;
+  const url = buildShareUrl(sid);
+  navigator.clipboard && navigator.clipboard.writeText(url);
+  const b = document.getElementById('copyLinkBtn');
+  b.textContent = '✓ Copied!'; b.classList.add('done');
+  setTimeout(() => { b.textContent = 'Copy Link'; b.classList.remove('done'); }, 2000);
+  toast('Link copied!');
+}
+</script>
+</body>
+</html>
