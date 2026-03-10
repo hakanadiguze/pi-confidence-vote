@@ -14,8 +14,7 @@
   gtag('js', new Date());
   gtag('config', 'G-X5ZRDKS4SR');
 </script>
-<!-- html2canvas + jsPDF for PDF export -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<!-- jsPDF for PDF export -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 :root{
@@ -681,99 +680,229 @@ function copyLink() {
   toast('Link copied!');
 }
 
-async function downloadPDF() {
+function downloadPDF() {
   const btn = document.getElementById('downloadBtn');
   btn.textContent = '⏳ Generating…'; btn.disabled = true;
 
-  // Temporarily hide elements we don't want in the PDF
-  const banner   = document.querySelector('.voter-banner');
-  const shareBox = document.getElementById('shareBox');
-  const bhdr     = document.querySelector('.bhdr');
-  const origBannerDisplay   = banner.style.display;
-  const origShareDisplay    = shareBox.style.display;
-
-  // Hide interactive/host-only UI for clean screenshot
-  banner.style.display   = 'none';
-  shareBox.style.display = 'none';
-
-  // Add a clean title bar for the PDF
-  const titleBar = document.createElement('div');
-  titleBar.id = 'pdf-title-bar';
-  titleBar.style.cssText = `
-    width:100%; background:linear-gradient(135deg,#2d7a6e,#4a9e90);
-    color:#fff; padding:18px 24px; border-radius:14px; margin-bottom:20px;
-    display:flex; align-items:center; justify-content:space-between;
-    font-family:'Nunito',sans-serif;
-  `;
-  const artName  = document.getElementById('boardTitle').textContent;
-  const dateStr  = new Date().toLocaleDateString('en-GB', {day:'2-digit',month:'short',year:'numeric'});
-  titleBar.innerHTML = `
-    <div>
-      <div style="font-size:20px;font-weight:900;letter-spacing:-.3px;">${artName}</div>
-      <div style="font-size:12px;opacity:.85;margin-top:3px;">Exported on ${dateStr}</div>
-    </div>
-    <div style="font-size:28px;">🗳️</div>
-  `;
-  bhdr.parentNode.insertBefore(titleBar, bhdr);
-
   try {
-    const grid = document.getElementById('bgrid');
     const { jsPDF } = window.jspdf;
+    const s        = sessionData;
+    if (!s) { toast('No session data!'); return; }
 
-    const canvas = await html2canvas(document.getElementById('boardScreen'), {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: '#dff0eb',
-      logging: false,
-      windowWidth: 1200,
+    const dateStr  = new Date().toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'});
+    const pdf      = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+    const PW       = pdf.internal.pageSize.getWidth();   // 297
+    const PH       = pdf.internal.pageSize.getHeight();  // 210
+    const MARGIN   = 10;
+    const COL_GAP  = 5;
+
+    // ── helpers ──
+    const rr = (x, y, w, h, r, fill, stroke) => {
+      pdf.setFillColor(...fill);
+      if (stroke) pdf.setDrawColor(...stroke); else pdf.setDrawColor(...fill);
+      pdf.roundedRect(x, y, w, h, r, r, stroke ? 'FD' : 'F');
+    };
+    const txt = (t, x, y, size, color, align='left', bold=false) => {
+      pdf.setFontSize(size);
+      pdf.setTextColor(...color);
+      pdf.setFont('helvetica', bold ? 'bold' : 'normal');
+      pdf.text(String(t), x, y, { align });
+    };
+    const bar = (x, y, w, h, pct, col) => {
+      // background
+      pdf.setFillColor(240, 244, 243);
+      pdf.roundedRect(x, y, w, h, 1, 1, 'F');
+      // filled portion
+      if (pct > 0) {
+        pdf.setFillColor(...col);
+        const fh = Math.max(h * pct, 1);
+        pdf.roundedRect(x, y + h - fh, w, fh, 1, 1, 'F');
+      }
+    };
+
+    const BAR_COLS = [
+      [224,82,82],[232,140,74],[200,160,0],[126,200,122],[58,171,109]
+    ];
+
+    const avgColor = (v) => {
+      if (!v || isNaN(v)) return [107,140,135];
+      if (v < 1.5) return [224,82,82];
+      if (v < 2.5) return [232,140,74];
+      if (v < 3.5) return [200,160,0];
+      if (v < 4.5) return [126,200,122];
+      return [58,171,109];
+    };
+    const avgBg = (v) => {
+      if (!v || isNaN(v)) return [240,244,243];
+      if (v < 1.5) return [253,232,232];
+      if (v < 2.5) return [253,240,224];
+      if (v < 3.5) return [254,250,224];
+      if (v < 4.5) return [232,248,232];
+      return [216,245,232];
+    };
+
+    // ── Page 1: Header + Team Cards ──
+    // Background
+    pdf.setFillColor(223, 240, 235);
+    pdf.rect(0, 0, PW, PH, 'F');
+
+    // Title bar
+    rr(MARGIN, MARGIN, PW - MARGIN*2, 18, 3, [45,122,110]);
+    txt('🗳️  ' + s.art + ' — PI Confidence Vote', MARGIN+5, MARGIN+7, 13, [255,255,255], 'left', true);
+    txt('Exported on ' + dateStr + '  ·  Session: ' + activeSid, MARGIN+5, MARGIN+13, 7, [200,235,228]);
+    txt('v1.0.0', PW - MARGIN - 2, MARGIN+13, 7, [200,235,228], 'right');
+
+    // Team cards — auto-layout
+    const teams     = s.teams || [];
+    const numTeams  = teams.length;
+    const COLS      = Math.min(numTeams, 3);
+    const ROWS      = Math.ceil(numTeams / COLS);
+    const cardY0    = MARGIN + 22;
+    const availW    = PW - MARGIN*2;
+    const availH    = PH - cardY0 - MARGIN;
+    const cardW     = (availW - COL_GAP * (COLS-1)) / COLS;
+    const cardH     = (availH - COL_GAP * (ROWS-1)) / ROWS;
+
+    teams.forEach((t, idx) => {
+      const col   = idx % COLS;
+      const row   = Math.floor(idx / COLS);
+      const cx    = MARGIN + col * (cardW + COL_GAP);
+      const cy    = cardY0 + row * (cardH + COL_GAP);
+
+      // Card bg
+      rr(cx, cy, cardW, cardH, 3, [255,255,255]);
+
+      // Header
+      rr(cx, cy, cardW, 8, 3, [245,166,35]);
+      // flatten bottom corners of header
+      pdf.setFillColor(245,166,35);
+      pdf.rect(cx, cy+4, cardW, 4, 'F');
+
+      const votes  = votesArray(s.votes[t.id]);
+      const total  = votes.length;
+      const cnt    = [0,0,0,0,0];
+      votes.forEach(v => cnt[v.score-1]++);
+      const mx     = Math.max(...cnt, 1);
+      const avg    = total > 0 ? votes.reduce((a,v)=>a+v.score,0)/total : null;
+
+      // Team name
+      txt(t.name.toUpperCase(), cx+3, cy+5.5, 7, [255,255,255], 'left', true);
+      // vote count badge
+      const bcTxt = total + ' vote' + (total!==1?'s':'');
+      const bcW   = bcTxt.length * 1.4 + 4;
+      rr(cx+cardW-bcW-2, cy+2, bcW, 4, 2, [255,255,255,0.3]);
+      pdf.setFillColor(255,255,255,80);
+      pdf.roundedRect(cx+cardW-bcW-2, cy+2, bcW, 4, 2, 2, 'F');
+      txt(bcTxt, cx+cardW-bcW/2-2, cy+5.2, 5.5, [255,255,255], 'center', true);
+
+      // Bars
+      const barAreaY = cy + 11;
+      const barAreaH = cardH - 28;
+      const barW     = (cardW - 10) / 5 - 2;
+      [0,1,2,3,4].forEach(i => {
+        const bx  = cx + 5 + i * (barW + 2);
+        const pct = cnt[i] / mx;
+        bar(bx, barAreaY, barW, barAreaH, pct, BAR_COLS[i]);
+        // count
+        txt(cnt[i], bx + barW/2, barAreaY + barAreaH + 3.5, 5.5, [26,46,43], 'center');
+        // label
+        txt(String(i+1), bx + barW/2, barAreaY + barAreaH + 7, 5, [107,140,135], 'center');
+      });
+
+      // Average
+      const avgY = cy + cardH - 8;
+      pdf.setDrawColor(200,224,219);
+      pdf.setLineWidth(0.3);
+      pdf.line(cx+3, avgY-1, cx+cardW-3, avgY-1);
+      txt('Team Average', cx+4, avgY+3.5, 6, [107,140,135]);
+      if (avg !== null) {
+        const ac = avgColor(avg); const ab = avgBg(avg);
+        rr(cx+cardW-18, avgY, 15, 7, 2, ab);
+        txt(avg.toFixed(1), cx+cardW-10.5, avgY+5, 9, ac, 'center', true);
+      } else {
+        txt('—', cx+cardW-10, avgY+4, 8, [107,140,135], 'center');
+      }
     });
 
-    const imgData = canvas.toDataURL('image/png');
-    const pdf     = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+    // ── Page 2: ART Level ──
+    pdf.addPage();
+    pdf.setFillColor(223, 240, 235);
+    pdf.rect(0, 0, PW, PH, 'F');
 
-    const pdfW  = pdf.internal.pageSize.getWidth();
-    const pdfH  = pdf.internal.pageSize.getHeight();
-    const ratio = canvas.width / canvas.height;
-    const imgH  = pdfW / ratio;
+    // ART header
+    const artGrad = [232,160,32];
+    rr(MARGIN, MARGIN, PW-MARGIN*2, 18, 3, artGrad);
+    pdf.setFillColor(245,200,66);
+    pdf.rect(MARGIN, MARGIN+9, PW-MARGIN*2, 9, 'F');
+    // re-draw corners
+    rr(MARGIN, MARGIN, PW-MARGIN*2, 18, 3, artGrad);
+    txt('PI PLANNING — ART LEVEL CONFIDENCE VOTE', MARGIN+5, MARGIN+7.5, 12, [255,255,255], 'left', true);
+    txt(s.art + '  ·  ' + dateStr, MARGIN+5, MARGIN+13.5, 7, [255,240,200]);
 
-    // If content is taller than one page, scale to fit
-    if (imgH <= pdfH) {
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfW, imgH);
+    const artVotes  = votesArray(s.votes['ART']);
+    const artTotal  = artVotes.length;
+    const artCnt    = [0,0,0,0,0];
+    artVotes.forEach(v => artCnt[v.score-1]++);
+    const artMx     = Math.max(...artCnt, 1);
+    const artAvg    = artTotal > 0 ? artVotes.reduce((a,v)=>a+v.score,0)/artTotal : null;
+
+    // Big ART card
+    const acx = MARGIN;
+    const acy = MARGIN + 22;
+    const acw = PW - MARGIN*2;
+    const ach = PH - acy - MARGIN;
+    rr(acx, acy, acw, ach, 4, [255,255,255]);
+
+    const artBarAreaY = acy + 8;
+    const artBarAreaH = ach - 30;
+    const artBarW     = (acw - 40) / 5 - 6;
+    const LABELS      = ['NO CONF.','LITTLE','GOOD','HIGH','V. HIGH'];
+
+    [0,1,2,3,4].forEach(i => {
+      const bx  = acx + 20 + i * (artBarW + 6);
+      const pct = artCnt[i] / artMx;
+      bar(bx, artBarAreaY, artBarW, artBarAreaH, pct, BAR_COLS[i]);
+
+      // count above bar
+      txt(artCnt[i], bx + artBarW/2, artBarAreaY - 2, 8, [26,46,43], 'center', true);
+      // score number
+      txt(String(i+1), bx + artBarW/2, artBarAreaY + artBarAreaH + 5, 10, BAR_COLS[i], 'center', true);
+      // label
+      txt(LABELS[i], bx + artBarW/2, artBarAreaY + artBarAreaH + 10, 6, [107,140,135], 'center');
+    });
+
+    // ART average
+    const artAvgY = acy + ach - 14;
+    pdf.setDrawColor(200,224,219);
+    pdf.setLineWidth(0.4);
+    pdf.line(acx+6, artAvgY-1, acx+acw-6, artAvgY-1);
+    txt('Overall ART Average', acx+8, artAvgY+5, 9, [107,140,135]);
+    if (artAvg !== null) {
+      const ac2 = avgColor(artAvg); const ab2 = avgBg(artAvg);
+      rr(acx+acw-42, artAvgY, 36, 12, 3, ab2);
+      txt(artAvg.toFixed(1), acx+acw-24, artAvgY+9, 16, ac2, 'center', true);
     } else {
-      // Multi-page: slice the canvas into page-height chunks
-      const pageHeightPx = Math.floor(canvas.width * (pdfH / pdfW));
-      let yOffset = 0;
-      while (yOffset < canvas.height) {
-        const sliceH  = Math.min(pageHeightPx, canvas.height - yOffset);
-        const tmpCanvas = document.createElement('canvas');
-        tmpCanvas.width  = canvas.width;
-        tmpCanvas.height = sliceH;
-        tmpCanvas.getContext('2d').drawImage(canvas, 0, -yOffset);
-        const sliceData = tmpCanvas.toDataURL('image/png');
-        if (yOffset > 0) pdf.addPage();
-        pdf.addImage(sliceData, 'PNG', 0, 0, pdfW, pdfW / ratio * (sliceH / canvas.height) * (canvas.height / sliceH));
-        yOffset += sliceH;
-      }
+      txt('No votes yet', acx+acw-40, artAvgY+6, 8, [107,140,135]);
     }
 
+    // ART vote count
+    txt(artTotal + ' vote' + (artTotal!==1?'s':'') + ' recorded', acx+acw/2, artAvgY+5, 8, [107,140,135], 'center');
+
+    // Save
     const fileName = `PI-Confidence-Vote-${activeSid}-${dateStr.replace(/ /g,'-')}.pdf`;
     pdf.save(fileName);
 
-    // GA event
     if (typeof gtag !== 'undefined') {
       gtag('event', 'download_pdf', { session_id: activeSid });
     }
-
     toast('PDF downloaded! 📄');
+
   } catch(e) {
-    toast('PDF error: ' + e.message);
     console.error(e);
+    toast('PDF error: ' + e.message);
   } finally {
-    // Restore UI
-    banner.style.display   = origBannerDisplay;
-    shareBox.style.display = origShareDisplay;
-    titleBar.remove();
-    btn.textContent = '⬇️ Download PDF'; btn.disabled = false;
+    btn.textContent = '⬇️ Download PDF';
+    btn.disabled = false;
   }
 }
 </script>
