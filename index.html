@@ -6,6 +6,17 @@
 <title>PI Confidence Vote v1.0 🗳️</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗳️</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<!-- Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-X5ZRDKS4SR"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-X5ZRDKS4SR');
+</script>
+<!-- html2canvas + jsPDF for PDF export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 :root{
   --bg:#dff0eb;--card:#fff;--teal:#2d7a6e;--tl:#e0f2ef;--tm:#4a9e90;
@@ -242,7 +253,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);min-height:100vh;colo
       <div class="voter-banner-name" id="voterBannerName">—</div>
       <div class="voter-banner-sub">Click any score button on a card to cast your vote — votes are anonymous</div>
     </div>
-    <button class="btn btn-gh" style="padding:7px 14px;font-size:12px;width:auto;background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);color:#fff;" onclick="switchUser()">Switch User</button>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+      <button id="downloadBtn" class="btn btn-gh" style="padding:7px 14px;font-size:12px;width:auto;background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);color:#fff;display:none;" onclick="downloadPDF()">⬇️ Download PDF</button>
+      <button class="btn btn-gh" style="padding:7px 14px;font-size:12px;width:auto;background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);color:#fff;" onclick="switchUser()">Switch User</button>
+    </div>
   </div>
 
   <div class="bgrid" id="bgrid"></div>
@@ -287,6 +301,7 @@ window.showScreen   = showScreen;
 window.switchUser   = switchUser;
 window.copyLink     = copyLink;
 window.castVote     = castVote;
+window.downloadPDF  = downloadPDF;
 
 // ── Init ──
 document.addEventListener('DOMContentLoaded', async () => {
@@ -459,8 +474,10 @@ function openBoard(sid) {
     document.getElementById('sidDisplay').textContent = sid;
     const url = buildShareUrl(sid);
     document.getElementById('shareHint').textContent = url;
+    document.getElementById('downloadBtn').style.display = 'flex';
   } else {
     sb.style.display = 'none';
+    document.getElementById('downloadBtn').style.display = 'none';
   }
 
   showScreen('boardScreen');
@@ -662,6 +679,102 @@ function copyLink() {
   b.textContent = '✓ Copied!'; b.classList.add('done');
   setTimeout(() => { b.textContent = 'Copy Link'; b.classList.remove('done'); }, 2000);
   toast('Link copied!');
+}
+
+async function downloadPDF() {
+  const btn = document.getElementById('downloadBtn');
+  btn.textContent = '⏳ Generating…'; btn.disabled = true;
+
+  // Temporarily hide elements we don't want in the PDF
+  const banner   = document.querySelector('.voter-banner');
+  const shareBox = document.getElementById('shareBox');
+  const bhdr     = document.querySelector('.bhdr');
+  const origBannerDisplay   = banner.style.display;
+  const origShareDisplay    = shareBox.style.display;
+
+  // Hide interactive/host-only UI for clean screenshot
+  banner.style.display   = 'none';
+  shareBox.style.display = 'none';
+
+  // Add a clean title bar for the PDF
+  const titleBar = document.createElement('div');
+  titleBar.id = 'pdf-title-bar';
+  titleBar.style.cssText = `
+    width:100%; background:linear-gradient(135deg,#2d7a6e,#4a9e90);
+    color:#fff; padding:18px 24px; border-radius:14px; margin-bottom:20px;
+    display:flex; align-items:center; justify-content:space-between;
+    font-family:'Nunito',sans-serif;
+  `;
+  const artName  = document.getElementById('boardTitle').textContent;
+  const dateStr  = new Date().toLocaleDateString('en-GB', {day:'2-digit',month:'short',year:'numeric'});
+  titleBar.innerHTML = `
+    <div>
+      <div style="font-size:20px;font-weight:900;letter-spacing:-.3px;">${artName}</div>
+      <div style="font-size:12px;opacity:.85;margin-top:3px;">Exported on ${dateStr}</div>
+    </div>
+    <div style="font-size:28px;">🗳️</div>
+  `;
+  bhdr.parentNode.insertBefore(titleBar, bhdr);
+
+  try {
+    const grid = document.getElementById('bgrid');
+    const { jsPDF } = window.jspdf;
+
+    const canvas = await html2canvas(document.getElementById('boardScreen'), {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#dff0eb',
+      logging: false,
+      windowWidth: 1200,
+    });
+
+    const imgData = canvas.toDataURL('image/png');
+    const pdf     = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+
+    const pdfW  = pdf.internal.pageSize.getWidth();
+    const pdfH  = pdf.internal.pageSize.getHeight();
+    const ratio = canvas.width / canvas.height;
+    const imgH  = pdfW / ratio;
+
+    // If content is taller than one page, scale to fit
+    if (imgH <= pdfH) {
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfW, imgH);
+    } else {
+      // Multi-page: slice the canvas into page-height chunks
+      const pageHeightPx = Math.floor(canvas.width * (pdfH / pdfW));
+      let yOffset = 0;
+      while (yOffset < canvas.height) {
+        const sliceH  = Math.min(pageHeightPx, canvas.height - yOffset);
+        const tmpCanvas = document.createElement('canvas');
+        tmpCanvas.width  = canvas.width;
+        tmpCanvas.height = sliceH;
+        tmpCanvas.getContext('2d').drawImage(canvas, 0, -yOffset);
+        const sliceData = tmpCanvas.toDataURL('image/png');
+        if (yOffset > 0) pdf.addPage();
+        pdf.addImage(sliceData, 'PNG', 0, 0, pdfW, pdfW / ratio * (sliceH / canvas.height) * (canvas.height / sliceH));
+        yOffset += sliceH;
+      }
+    }
+
+    const fileName = `PI-Confidence-Vote-${activeSid}-${dateStr.replace(/ /g,'-')}.pdf`;
+    pdf.save(fileName);
+
+    // GA event
+    if (typeof gtag !== 'undefined') {
+      gtag('event', 'download_pdf', { session_id: activeSid });
+    }
+
+    toast('PDF downloaded! 📄');
+  } catch(e) {
+    toast('PDF error: ' + e.message);
+    console.error(e);
+  } finally {
+    // Restore UI
+    banner.style.display   = origBannerDisplay;
+    shareBox.style.display = origShareDisplay;
+    titleBar.remove();
+    btn.textContent = '⬇️ Download PDF'; btn.disabled = false;
+  }
 }
 </script>
 </body>
