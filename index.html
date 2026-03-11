@@ -170,28 +170,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);min-height:100vh;colo
     <div class="logo">🗳️</div>
     <h1 class="app-title">PI Confidence Vote</h1>
     <p class="app-sub">Real-time PI Planning confidence votes for agile teams</p>
-    <div style="text-align:center;"><span class="version-badge">v1.0.0 — March 2026</span></div>
 
     <div class="qs">
-      <div class="qs-t">⚡ Host a Session</div>
-      <p class="qs-s">Enter your name to configure and create a new voting session.</p>
-      <input class="field" type="text" id="hostNameInput" placeholder="Your name (as host)" />
+      <div class="qs-t">⚡ Create a Session</div>
+      <p class="qs-s">Configure your ART and teams, then share the invite link with participants.</p>
       <button class="btn btn-or" onclick="goToConfig()">Configure &amp; Create Session →</button>
-    </div>
-
-    <div class="col" id="joinCol">
-      <div class="col-h" onclick="toggleCol('joinCol')">
-        <span class="lft">👥 <span>Join with Session ID</span></span>
-        <span class="chev">›</span>
-      </div>
-      <div class="col-b">
-        <div class="err-box" id="joinErr"></div>
-        <input class="field" type="text" id="joinIdInput" placeholder="Session ID (e.g. AB12CD)"
-          style="text-transform:uppercase;letter-spacing:3px;font-family:'Courier New',monospace;font-size:18px;text-align:center;" maxlength="6"
-          oninput="this.value=this.value.toUpperCase()" />
-        <input class="field" type="text" id="joinNameInput" placeholder="Your name" />
-        <button class="btn btn-or" id="joinBtn" onclick="joinSession()">Join Session →</button>
-      </div>
     </div>
 
     <div class="col" id="howCol">
@@ -202,9 +185,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);min-height:100vh;colo
       <div class="col-b">
         <p style="font-size:13px;color:var(--mu);line-height:1.8;">
           1. <strong>Host</strong> creates a session with ART + team names.<br>
-          2. Share the <strong>link or Session ID</strong> with all participants.<br>
-          3. Everyone enters the ID + their name and joins.<br>
-          4. Click any <strong>1–5 button</strong> on a team or ART card to vote — team and ART votes are independent.<br>
+          2. Copy the <strong>invite link</strong> and share it with all participants.<br>
+          3. Participants open the link and start voting immediately — no sign-in needed.<br>
+          4. Click any <strong>1–5 button</strong> on a team or ART card to vote.<br>
           5. Results update <strong>live</strong> for everyone. Votes are anonymous.
         </p>
       </div>
@@ -213,13 +196,22 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);min-height:100vh;colo
   </div>
 </div>
 
+<!-- QUICK JOIN (link ile gelenler için) -->
+<div class="screen" id="quickJoinScreen">
+  <div class="card" style="max-width:440px;text-align:center;">
+    <div class="logo">🗳️</div>
+    <h2 id="qjArtName" style="font-family:'Nunito',sans-serif;font-weight:900;font-size:22px;margin-bottom:6px;">PI Confidence Vote</h2>
+    <p id="qjSub" style="color:var(--mu);font-size:13px;margin-bottom:24px;">You've been invited to vote. Votes are anonymous.</p>
+    <div class="err-box" id="qjErr"></div>
+    <button class="btn btn-or" id="qjBtn" onclick="quickJoin()">Join &amp; Vote →</button>
+  </div>
+</div>
 <!-- CONFIG -->
 <div class="screen" id="configScreen">
   <div class="card" style="max-width:530px;">
     <button class="btnbk" onclick="showScreen('homeScreen')">← Back</button>
     <h2 style="font-family:'Nunito',sans-serif;font-weight:900;font-size:20px;margin-bottom:3px;">Configure Session</h2>
     <p style="color:var(--mu);font-size:13px;margin-bottom:20px;">Set your ART name and add all participating teams.</p>
-    <div class="fg"><label class="lbl">Host Name</label><input class="field" type="text" id="cfgHost" placeholder="Your name" /></div>
     <div class="fg"><label class="lbl">ART Name</label><input class="field" type="text" id="cfgArt" placeholder="ART Name" /></div>
     <div class="fg">
       <label class="lbl">Teams</label>
@@ -238,23 +230,19 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);min-height:100vh;colo
       <p id="boardSub">Voting in progress…</p>
     </div>
     <div class="share-box" id="shareBox" style="display:none;">
-      <div class="share-box-title">📤 Share with participants</div>
-      <div class="share-row">
-        <div class="share-code" id="sidDisplay">——</div>
-        <button class="copy-btn" id="copyLinkBtn" onclick="copyLink()">Copy Link</button>
-      </div>
-      <p class="share-hint" id="shareHint">Loading link…</p>
+      <div class="share-box-title">📤 Share invite link with participants</div>
+      <div style="background:var(--tl);border-radius:8px;padding:8px 10px;margin-bottom:8px;word-break:break-all;font-size:12px;color:var(--teal);line-height:1.6;" id="shareHint">—</div>
+      <button class="copy-btn" id="copyLinkBtn" onclick="copyLink()" style="width:100%;padding:9px;font-size:13px;border-radius:9px;">🔗 Copy Invite Link</button>
     </div>
   </div>
 
   <div class="voter-banner">
     <div>
-      <div class="voter-banner-name" id="voterBannerName">—</div>
+      <div class="voter-banner-name">🗳️ Voting in progress</div>
       <div class="voter-banner-sub">Click any score button on a card to cast your vote — votes are anonymous</div>
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
       <button id="downloadBtn" class="btn btn-gh" style="padding:7px 14px;font-size:12px;width:auto;background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);color:#fff;display:none;" onclick="downloadPDF()">⬇️ Download PDF</button>
-      <button class="btn btn-gh" style="padding:7px 14px;font-size:12px;width:auto;background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);color:#fff;" onclick="switchUser()">Switch User</button>
     </div>
   </div>
 
@@ -295,16 +283,14 @@ window.toggleCol    = toggleCol;
 window.goToConfig   = goToConfig;
 window.addTeam      = addTeam;
 window.createSession= createSession;
-window.joinSession  = joinSession;
+window.quickJoin    = quickJoin;
 window.showScreen   = showScreen;
-window.switchUser   = switchUser;
 window.copyLink     = copyLink;
 window.castVote     = castVote;
 window.downloadPDF  = downloadPDF;
 
 // ── Init ──
 document.addEventListener('DOMContentLoaded', async () => {
-  // Check URL for ?join=XXXX or #join/XXXX
   const params = new URLSearchParams(location.search);
   let joinId = params.get('join');
   if (!joinId) {
@@ -318,10 +304,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const sid = joinId.toUpperCase();
     const snap = await get(ref(db, `sessions/${sid}`));
     if (snap.exists()) {
-      document.getElementById('joinIdInput').value = sid;
-      document.getElementById('joinCol').classList.add('open');
-      showScreen('homeScreen');
-      toast('Session found! Enter your name to join.');
+      // Go directly to quick join screen — no home screen detour
+      const s = snap.val();
+      activeSid = sid;
+      document.getElementById('qjArtName').textContent = s.art;
+      document.getElementById('qjSub').textContent = `You've been invited to vote in "${s.art}". Enter your name to join.`;
+      document.getElementById('qjName').value = '';
+      showScreen('quickJoinScreen');
+      setTimeout(() => document.getElementById('qjName').focus(), 200);
     } else {
       showScreen('homeScreen');
       showErr('joinErr', `Session "${sid}" not found. Ask the host for the correct link.`);
@@ -371,9 +361,6 @@ function buildShareUrl(sid) {
 
 // ── Home / Config ──
 function goToConfig() {
-  const n = document.getElementById('hostNameInput').value.trim();
-  if (!n) { toast('Please enter your name!'); return; }
-  document.getElementById('cfgHost').value = n;
   document.getElementById('teamList').innerHTML = '';
   addTeam('Team 1'); addTeam('Team 2');
   showScreen('configScreen');
@@ -390,9 +377,7 @@ function addTeam(name = '') {
 }
 
 async function createSession() {
-  const host = document.getElementById('cfgHost').value.trim();
   const art  = document.getElementById('cfgArt').value.trim();
-  if (!host) { toast('Enter your name!'); return; }
   if (!art)  { toast('Enter ART name!'); return; }
 
   const rows  = document.querySelectorAll('#teamList .trow');
@@ -411,11 +396,7 @@ async function createSession() {
   teams.forEach(t => { votes[t.id] = {}; });
   votes['ART'] = {};
 
-  const sessionObj = {
-    art, host, teams,
-    votes,
-    createdAt: Date.now()
-  };
+  const sessionObj = { art, teams, votes, createdAt: Date.now() };
 
   try {
     await set(ref(db, `sessions/${sid}`), sessionObj);
@@ -425,52 +406,40 @@ async function createSession() {
   }
 
   btn.disabled = false; btn.innerHTML = '🚀 Create Session';
-  activeSid = sid; currentUser = host; isHost = true;
+  activeSid   = sid;
+  currentUser = 'anon_' + uid(); // anonymous host voter ID
+  isHost      = true;
   openBoard(sid);
 }
 
 // ── Join ──
-async function joinSession() {
-  const sid  = document.getElementById('joinIdInput').value.trim().toUpperCase();
-  const name = document.getElementById('joinNameInput').value.trim();
-  if (!sid)  { showErr('joinErr', 'Enter a Session ID!'); return; }
-  if (!name) { showErr('joinErr', 'Enter your name!'); return; }
+async function quickJoin() {
+  if (!activeSid) { showErr('qjErr', 'Session not found. Please use the invite link again.'); return; }
 
-  const btn = document.getElementById('joinBtn');
+  const btn = document.getElementById('qjBtn');
   btn.disabled = true; btn.textContent = 'Joining…';
 
-  const snap = await get(ref(db, `sessions/${sid}`));
-  btn.disabled = false; btn.textContent = 'Join Session →';
+  const snap = await get(ref(db, `sessions/${activeSid}`));
+  btn.disabled = false; btn.textContent = 'Join & Vote →';
 
   if (!snap.exists()) {
-    showErr('joinErr', `⚠️ Session "${sid}" not found. Check the ID and try again.`);
+    showErr('qjErr', 'Session no longer exists. Ask the host to create a new one.');
     return;
   }
 
-  activeSid   = sid;
-  currentUser = name;
-  isHost      = (snap.val().host === name);
-  openBoard(sid);
-}
-
-function switchUser() {
-  if (unsubscribe) { unsubscribe(); unsubscribe = null; }
-  showScreen('homeScreen');
-  document.getElementById('joinCol').classList.add('open');
-  if (activeSid) document.getElementById('joinIdInput').value = activeSid;
+  currentUser = 'anon_' + uid(); // unique anonymous ID per browser visit
+  isHost      = false;
+  openBoard(activeSid);
 }
 
 // ── Board ──
 function openBoard(sid) {
-  // Build static structure first
   document.getElementById('boardTitle').textContent = '…';
   document.getElementById('boardSub').textContent   = 'Connecting…';
-  document.getElementById('voterBannerName').textContent = '👤 ' + currentUser + (isHost ? ' (Host)' : '');
 
   const sb = document.getElementById('shareBox');
   if (isHost) {
     sb.style.display = 'block';
-    document.getElementById('sidDisplay').textContent = sid;
     const url = buildShareUrl(sid);
     document.getElementById('shareHint').textContent = url;
     document.getElementById('downloadBtn').style.display = 'flex';
@@ -481,7 +450,6 @@ function openBoard(sid) {
 
   showScreen('boardScreen');
 
-  // Subscribe to real-time updates
   if (unsubscribe) unsubscribe();
   const sessRef = ref(db, `sessions/${sid}`);
   unsubscribe = onValue(sessRef, snap => {
@@ -671,13 +639,12 @@ async function castVote(tid, score) {
 }
 
 function copyLink() {
-  const sid = document.getElementById('sidDisplay').textContent;
-  const url = buildShareUrl(sid);
+  const url = buildShareUrl(activeSid);
   navigator.clipboard && navigator.clipboard.writeText(url);
   const b = document.getElementById('copyLinkBtn');
-  b.textContent = '✓ Copied!'; b.classList.add('done');
-  setTimeout(() => { b.textContent = 'Copy Link'; b.classList.remove('done'); }, 2000);
-  toast('Link copied!');
+  b.textContent = '✓ Link Copied!'; b.classList.add('done');
+  setTimeout(() => { b.innerHTML = '🔗 Copy Invite Link'; b.classList.remove('done'); }, 2000);
+  toast('Invite link copied!');
 }
 
 function downloadPDF() {
