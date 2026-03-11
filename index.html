@@ -304,18 +304,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const sid = joinId.toUpperCase();
     const snap = await get(ref(db, `sessions/${sid}`));
     if (snap.exists()) {
-      // Go directly to quick join screen — no home screen detour
       const s = snap.val();
       activeSid = sid;
       document.getElementById('qjArtName').textContent = s.art;
-      document.getElementById('qjSub').textContent = `You've been invited to vote in "${s.art}". Enter your name to join.`;
-      document.getElementById('qjName').value = '';
+      document.getElementById('qjSub').textContent = `You've been invited to vote in "${s.art}". Votes are anonymous.`;
       showScreen('quickJoinScreen');
-      setTimeout(() => document.getElementById('qjName').focus(), 200);
     } else {
       showScreen('homeScreen');
-      showErr('joinErr', `Session "${sid}" not found. Ask the host for the correct link.`);
-      document.getElementById('joinCol').classList.add('open');
+      toast(`Session not found. Ask the host for a new invite link.`);
     }
   } else {
     showScreen('homeScreen');
