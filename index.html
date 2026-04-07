@@ -1,20 +1,15 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PI Confidence Vote v1.0 🗳️</title>
+<title>PI Confidence Vote 🗳️</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗳️</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <!-- Google Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-X5ZRDKS4SR"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-X5ZRDKS4SR');
-</script>
-<!-- jsPDF for PDF export -->
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-X5ZRDKS4SR');</script>
+<!-- jsPDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 :root{
@@ -22,28 +17,23 @@
   --or:#e8a96a;--ord:#d4895a;--tx:#1a2e2b;--mu:#6b8c87;--bo:#c8e0db;
   --r:18px;--sh:0 4px 24px rgba(45,122,110,.10);
   --v1:#e05252;--v2:#e88c4a;--v3:#c8a000;--v4:#7ec87a;--v5:#3aab6d;
+  --danger:#e05252;--danger-bg:#fde8e8;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'DM Sans',sans-serif;background:var(--bg);min-height:100vh;color:var(--tx);}
-
 .spin{width:36px;height:36px;border:4px solid var(--bo);border-top-color:var(--teal);border-radius:50%;animation:sp .8s linear infinite;margin:0 auto 12px;}
 @keyframes sp{to{transform:rotate(360deg)}}
 #loadingBox{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:8px;color:var(--mu);font-size:14px;}
-
 .screen{display:none;}
 .screen.active{display:flex;flex-direction:column;align-items:center;min-height:100vh;padding:36px 16px 60px;}
-#homeScreen{justify-content:center;}
-
+#homeScreen,#quickJoinScreen{justify-content:center;}
 .card{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);padding:38px 32px;width:100%;max-width:520px;}
 .logo{width:68px;height:68px;background:linear-gradient(135deg,#5ba8a0,#2d7a6e);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 14px;box-shadow:0 6px 20px rgba(45,122,110,.25);}
 .app-title{font-family:'Nunito',sans-serif;font-size:28px;font-weight:900;text-align:center;letter-spacing:-.5px;}
-.app-sub{color:var(--mu);font-size:14px;text-align:center;margin:5px 0 10px;}
-.version-badge{display:inline-block;background:var(--teal);color:#fff;font-family:'Nunito',sans-serif;font-weight:800;font-size:11px;padding:3px 10px;border-radius:20px;margin-bottom:22px;letter-spacing:.5px;}
-
+.app-sub{color:var(--mu);font-size:14px;text-align:center;margin:5px 0 24px;}
 .qs{background:var(--tl);border:1.5px solid var(--bo);border-radius:14px;padding:20px;margin-bottom:12px;}
 .qs-t{font-family:'Nunito',sans-serif;font-weight:800;font-size:16px;color:var(--teal);margin-bottom:3px;}
 .qs-s{color:var(--mu);font-size:12px;margin-bottom:13px;}
-
 .col{background:var(--card);border:1.5px solid var(--bo);border-radius:14px;margin-bottom:10px;overflow:hidden;}
 .col-h{padding:14px 17px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:800;font-size:14px;user-select:none;}
 .col-h .lft{display:flex;align-items:center;gap:8px;}
@@ -51,20 +41,24 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);min-height:100vh;colo
 .col.open .col-b{display:block;}
 .chev{font-size:12px;color:var(--mu);transition:transform .2s;}
 .col.open .chev{transform:rotate(90deg);}
-
 .field{width:100%;padding:12px 15px;border:1.5px solid var(--bo);border-radius:11px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--tx);background:#fff;outline:none;transition:border-color .2s;margin-bottom:9px;}
 .field:focus{border-color:var(--tm);}
 .field::placeholder{color:#b0c9c5;}
-
+select.field{cursor:pointer;}
 .btn{width:100%;padding:13px;border:none;border-radius:11px;font-family:'Nunito',sans-serif;font-weight:800;font-size:15px;cursor:pointer;transition:background .2s,transform .1s;display:flex;align-items:center;justify-content:center;gap:6px;}
 .btn:hover{transform:translateY(-1px);}
 .btn:active{transform:translateY(0);}
 .btn:disabled{opacity:.5;pointer-events:none;}
 .btn-or{background:var(--or);color:#fff;}
 .btn-or:hover{background:var(--ord);}
+.btn-teal{background:var(--teal);color:#fff;}
+.btn-teal:hover{background:var(--tm);}
 .btn-gh{background:none;border:1.5px solid var(--bo);color:var(--tx);}
 .btn-gh:hover{background:var(--tl);}
-
+.btn-red{background:var(--danger-bg);border:1.5px solid #f5c5c5;color:var(--danger);}
+.btn-red:hover{background:#f5c5c5;}
+.btn-google{background:#fff;border:1.5px solid var(--bo);color:var(--tx);gap:10px;}
+.btn-google:hover{background:var(--tl);}
 .lbl{font-family:'Nunito',sans-serif;font-weight:700;font-size:12px;color:var(--teal);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;display:block;}
 .fg{margin-bottom:17px;}
 .team-list{display:flex;flex-direction:column;gap:7px;margin-bottom:8px;}
@@ -76,28 +70,28 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);min-height:100vh;colo
 .btnadd:hover{background:#c8e8e2;}
 .btnbk{background:none;border:none;color:var(--mu);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;margin-bottom:16px;display:flex;align-items:center;gap:5px;padding:0;}
 .btnbk:hover{color:var(--teal);}
+.err-box{background:#fde8e8;border:1.5px solid #f5c5c5;border-radius:10px;padding:12px 15px;color:#b03030;font-size:13px;margin-bottom:10px;display:none;}
+.err-box.show{display:block;}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%) translateY(90px);background:var(--tx);color:#fff;padding:10px 20px;border-radius:10px;font-family:'Nunito',sans-serif;font-weight:700;font-size:13px;z-index:9999;transition:transform .3s cubic-bezier(.34,1.56,.64,1);pointer-events:none;max-width:92vw;text-align:center;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+.footer{margin-top:20px;color:var(--mu);font-size:12px;text-align:center;}
+.divider{display:flex;align-items:center;gap:10px;margin:16px 0;color:var(--mu);font-size:12px;}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--bo);}
 
-/* BOARD */
+/* ── BOARD ── */
 #boardScreen{padding-top:24px;}
 .bhdr{width:100%;max-width:1200px;display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-bottom:20px;}
 .btit h1{font-family:'Nunito',sans-serif;font-weight:900;font-size:22px;}
 .btit p{color:var(--mu);font-size:13px;margin-top:3px;}
-
 .share-box{background:var(--card);border:1.5px solid var(--bo);border-radius:14px;padding:14px 16px;min-width:280px;max-width:380px;}
 .share-box-title{font-family:'Nunito',sans-serif;font-weight:800;font-size:11px;color:var(--teal);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
-.share-row{display:flex;gap:8px;align-items:center;margin-bottom:7px;}
-.share-code{font-family:'Courier New',monospace;font-weight:900;font-size:20px;letter-spacing:4px;color:var(--teal);background:var(--tl);padding:7px 12px;border-radius:8px;flex:1;text-align:center;}
 .copy-btn{padding:6px 12px;background:var(--teal);color:#fff;border:none;border-radius:8px;font-family:'Nunito',sans-serif;font-weight:700;font-size:12px;cursor:pointer;white-space:nowrap;transition:background .2s;}
 .copy-btn:hover{background:var(--tm);}
 .copy-btn.done{background:var(--v5);}
-.share-hint{font-size:11px;color:var(--mu);line-height:1.5;}
-
 .voter-banner{width:100%;max-width:1200px;background:var(--teal);color:#fff;border-radius:12px;padding:12px 18px;display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:8px;}
 .voter-banner-name{font-family:'Nunito',sans-serif;font-weight:800;font-size:15px;}
 .voter-banner-sub{font-size:12px;opacity:.8;margin-top:2px;}
-
 .bgrid{width:100%;max-width:1200px;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-bottom:18px;}
-
 .vc-card{background:var(--card);border-radius:14px;box-shadow:var(--sh);overflow:hidden;}
 .vc-card.art-card-full{grid-column:1/-1;}
 .vch{padding:12px 15px;display:flex;align-items:center;justify-content:space-between;}
@@ -106,7 +100,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);min-height:100vh;colo
 .team-hdr{background:#f5a623;}
 .art-hdr{background:linear-gradient(135deg,#e8a020,#f5c842);}
 .vcb{padding:14px 15px;}
-
 .bars{display:flex;gap:5px;align-items:flex-end;height:52px;margin-bottom:10px;}
 .bcol{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;}
 .bw{width:100%;background:#f0f4f3;border-radius:5px;height:36px;display:flex;align-items:flex-end;overflow:hidden;}
@@ -116,7 +109,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);min-height:100vh;colo
 .avg-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0 10px;border-bottom:1.5px solid var(--bo);margin-bottom:10px;}
 .avg-l{font-size:11px;color:var(--mu);}
 .avg-v{font-family:'Nunito',sans-serif;font-weight:900;font-size:20px;border-radius:8px;padding:2px 10px;transition:color .5s,background .5s;}
-
 .vote-section{border-top:1.5px solid var(--bo);padding-top:10px;}
 .vote-section-label{font-family:'Nunito',sans-serif;font-weight:700;font-size:11px;color:var(--mu);margin-bottom:7px;text-transform:uppercase;letter-spacing:.4px;}
 .inline-btns{display:flex;gap:6px;justify-content:center;}
@@ -131,7 +123,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);min-height:100vh;colo
 .ivb-em{font-size:8px;}
 .vote-status{font-size:11px;color:var(--mu);text-align:center;margin-top:7px;height:14px;}
 .vote-status.ok{color:var(--v5);font-weight:700;}
-
 .art-bars{display:flex;gap:9px;align-items:flex-end;height:68px;margin-bottom:12px;}
 .acol{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;}
 .abw{width:100%;background:#f0f4f3;border-radius:7px;height:50px;display:flex;align-items:flex-end;overflow:hidden;}
@@ -142,29 +133,64 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);min-height:100vh;colo
 .art-avg-l{font-family:'Nunito',sans-serif;font-weight:700;font-size:13px;color:var(--mu);}
 .art-avg-v{font-family:'Nunito',sans-serif;font-weight:900;font-size:32px;border-radius:10px;padding:3px 15px;transition:color .5s,background .5s;}
 
-.err-box{background:#fde8e8;border:1.5px solid #f5c5c5;border-radius:10px;padding:12px 15px;color:#b03030;font-size:13px;margin-bottom:10px;display:none;}
-.err-box.show{display:block;}
+/* ── ADMIN ── */
+#adminScreen{padding-top:24px;align-items:flex-start;}
+.admin-layout{width:100%;max-width:1100px;display:grid;grid-template-columns:300px 1fr;gap:20px;align-items:start;}
+.admin-sidebar{display:flex;flex-direction:column;gap:14px;}
+.admin-main{display:flex;flex-direction:column;gap:14px;}
+.admin-card{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);padding:22px 24px;}
+.admin-card-title{font-family:'Nunito',sans-serif;font-weight:900;font-size:16px;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.admin-topbar{width:100%;max-width:1100px;display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;}
+.admin-topbar-title{font-family:'Nunito',sans-serif;font-weight:900;font-size:22px;}
+.user-chip{display:flex;align-items:center;gap:8px;background:var(--card);border:1.5px solid var(--bo);border-radius:10px;padding:7px 12px;}
+.user-chip img{width:28px;height:28px;border-radius:50%;}
+.user-chip-name{font-size:13px;font-weight:600;}
+.art-item{background:var(--tl);border:1.5px solid var(--bo);border-radius:10px;padding:10px 13px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:border-color .2s;}
+.art-item:hover,.art-item.selected{border-color:var(--teal);background:#c8e8e2;}
+.art-item-name{font-family:'Nunito',sans-serif;font-weight:800;font-size:14px;}
+.art-item-sub{font-size:11px;color:var(--mu);margin-top:2px;}
+.art-item-actions{display:flex;gap:6px;}
+.icon-btn{width:28px;height:28px;border-radius:7px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:background .2s;}
+.icon-btn.del{background:#fde8e8;color:var(--danger);}
+.icon-btn.del:hover{background:#f5c5c5;}
+.session-item{background:var(--tl);border:1.5px solid var(--bo);border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.session-item.closed{opacity:.75;}
+.session-item-info{}
+.session-item-title{font-family:'Nunito',sans-serif;font-weight:800;font-size:14px;}
+.session-item-meta{font-size:11px;color:var(--mu);margin-top:3px;}
+.session-item-actions{display:flex;gap:7px;flex-shrink:0;}
+.status-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-family:'Nunito',sans-serif;font-weight:800;font-size:11px;}
+.status-badge.active{background:#d8f5e8;color:#2d7a4a;}
+.status-badge.closed{background:#f0f4f3;color:var(--mu);}
+.tab-row{display:flex;gap:4px;margin-bottom:16px;background:var(--tl);border-radius:10px;padding:4px;}
+.tab-btn{flex:1;padding:8px;border:none;border-radius:7px;font-family:'Nunito',sans-serif;font-weight:700;font-size:13px;cursor:pointer;background:none;color:var(--mu);transition:background .2s,color .2s;}
+.tab-btn.active{background:var(--card);color:var(--teal);box-shadow:0 2px 8px rgba(45,122,110,.12);}
+.empty-state{text-align:center;padding:24px;color:var(--mu);font-size:13px;}
 
-.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%) translateY(90px);background:var(--tx);color:#fff;padding:10px 20px;border-radius:10px;font-family:'Nunito',sans-serif;font-weight:700;font-size:13px;z-index:9999;transition:transform .3s cubic-bezier(.34,1.56,.64,1);pointer-events:none;max-width:92vw;text-align:center;}
-.toast.show{transform:translateX(-50%) translateY(0);}
+/* board readonly overlay for closed sessions */
+.board-readonly .vote-section{display:none;}
+.board-readonly .voter-banner{background:#6b8c87;}
+.closed-badge{background:#f0f4f3;color:var(--mu);font-family:'Nunito',sans-serif;font-weight:800;font-size:12px;padding:4px 12px;border-radius:20px;display:inline-block;margin-bottom:12px;}
 
-.footer{margin-top:20px;color:var(--mu);font-size:12px;text-align:center;}
-
+@media(max-width:900px){
+  .admin-layout{grid-template-columns:1fr;}
+}
 @media(max-width:640px){
   .card{padding:22px 16px;}
   .bgrid{grid-template-columns:1fr;}
   .vc-card.art-card-full{grid-column:auto;}
   .bhdr{flex-direction:column;}
   .share-box{min-width:0;width:100%;}
+  .admin-card{padding:16px;}
 }
 </style>
 </head>
 <body>
 
-<div id="loadingBox"><div class="spin"></div><p>Connecting…</p></div>
+<div id="loadingBox"><div class="spin"></div><p>Loading…</p></div>
 <div class="toast" id="toast"></div>
 
-<!-- HOME -->
+<!-- ═══════════════ HOME ═══════════════ -->
 <div class="screen" id="homeScreen">
   <div class="card">
     <div class="logo">🗳️</div>
@@ -172,23 +198,27 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);min-height:100vh;colo
     <p class="app-sub">Real-time PI Planning confidence votes for agile teams</p>
 
     <div class="qs">
-      <div class="qs-t">⚡ Create a Session</div>
-      <p class="qs-s">Configure your ART and teams, then share the invite link with participants.</p>
+      <div class="qs-t">⚡ Quick Session</div>
+      <p class="qs-s">No account needed. Configure ART + teams and share the invite link.</p>
       <button class="btn btn-or" onclick="goToConfig()">Configure &amp; Create Session →</button>
     </div>
 
-    <div class="col" id="howCol">
+    <div class="divider">or</div>
+
+    <button class="btn btn-google" onclick="adminLogin()">
+      <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#4285F4" d="M44.5 20H24v8.5h11.8C34.7 33.9 29.8 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 5.1 29.6 3 24 3 12.9 3 4 11.9 4 23s8.9 20 20 20c11 0 19.7-7.7 19.7-20 0-1.3-.1-2.7-.2-3z"/><path fill="#34A853" d="M6.3 14.7l7 5.1C15.1 16.1 19.2 13 24 13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 5.1 29.6 3 24 3c-7.7 0-14.4 4.4-17.7 10.7z"/><path fill="#FBBC05" d="M24 43c5.6 0 10.7-1.9 14.6-5.2l-6.8-5.6C29.8 34.1 27 35 24 35c-5.8 0-10.7-3.9-12.4-9.3l-6.9 5.3C8.1 38.7 15.5 43 24 43z"/><path fill="#EA4335" d="M43.6 20H24v8.5h11.8c-.8 2.8-2.5 5.1-4.9 6.6l6.8 5.6C41.5 37.3 44 31.1 44 24c0-1.3-.1-2.7-.4-4z"/></svg>
+      Sign in as Admin
+    </button>
+
+    <div class="col" style="margin-top:12px;" id="howCol">
       <div class="col-h" onclick="toggleCol('howCol')">
         <span class="lft">❓ <span>How does this work?</span></span>
         <span class="chev">›</span>
       </div>
       <div class="col-b">
         <p style="font-size:13px;color:var(--mu);line-height:1.8;">
-          1. <strong>Host</strong> creates a session with ART + team names.<br>
-          2. Copy the <strong>invite link</strong> and share it with all participants.<br>
-          3. Participants open the link and start voting immediately — no sign-in needed.<br>
-          4. Click any <strong>1–5 button</strong> on a team or ART card to vote.<br>
-          5. Results update <strong>live</strong> for everyone. Votes are anonymous.
+          <strong>Quick session:</strong> Configure ART + teams instantly, share link — no account needed.<br><br>
+          <strong>Admin mode:</strong> Sign in with Google to save your ARTs and teams permanently, manage multiple sessions, and view history.
         </p>
       </div>
     </div>
@@ -196,7 +226,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);min-height:100vh;colo
   </div>
 </div>
 
-<!-- QUICK JOIN (link ile gelenler için) -->
+<!-- ═══════════════ QUICK JOIN ═══════════════ -->
 <div class="screen" id="quickJoinScreen">
   <div class="card" style="max-width:440px;text-align:center;">
     <div class="logo">🗳️</div>
@@ -206,7 +236,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);min-height:100vh;colo
     <button class="btn btn-or" id="qjBtn" onclick="quickJoin()">Join &amp; Vote →</button>
   </div>
 </div>
-<!-- CONFIG -->
+
+<!-- ═══════════════ ANON CONFIG ═══════════════ -->
 <div class="screen" id="configScreen">
   <div class="card" style="max-width:530px;">
     <button class="btnbk" onclick="showScreen('homeScreen')">← Back</button>
@@ -216,45 +247,100 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);min-height:100vh;colo
     <div class="fg">
       <label class="lbl">Teams</label>
       <div class="team-list" id="teamList"></div>
-      <button class="btnadd" onclick="addTeam()">+ Add Team</button>
+      <button class="btnadd" onclick="addTeam('teamList')">+ Add Team</button>
     </div>
-    <button class="btn btn-or" id="createBtn" onclick="createSession()">🚀 Create Session</button>
+    <button class="btn btn-or" id="createBtn" onclick="createAnonSession()">🚀 Create Session</button>
   </div>
 </div>
 
-<!-- BOARD -->
+<!-- ═══════════════ BOARD ═══════════════ -->
 <div class="screen" id="boardScreen">
   <div class="bhdr">
     <div class="btit">
-      <h1 id="boardTitle">ART Name — PI Confidence Vote</h1>
+      <h1 id="boardTitle">PI Confidence Vote</h1>
       <p id="boardSub">Voting in progress…</p>
     </div>
-    <div class="share-box" id="shareBox" style="display:none;">
-      <div class="share-box-title">📤 Share invite link with participants</div>
-      <div style="background:var(--tl);border-radius:8px;padding:8px 10px;margin-bottom:8px;word-break:break-all;font-size:12px;color:var(--teal);line-height:1.6;" id="shareHint">—</div>
-      <button class="copy-btn" id="copyLinkBtn" onclick="copyLink()" style="width:100%;padding:9px;font-size:13px;border-radius:9px;">🔗 Copy Invite Link</button>
+    <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end;">
+      <div class="share-box" id="shareBox" style="display:none;">
+        <div class="share-box-title">📤 Share invite link</div>
+        <div style="background:var(--tl);border-radius:8px;padding:8px 10px;margin-bottom:8px;word-break:break-all;font-size:12px;color:var(--teal);line-height:1.6;" id="shareHint">—</div>
+        <button class="copy-btn" id="copyLinkBtn" onclick="copyLink()" style="width:100%;padding:9px;font-size:13px;border-radius:9px;">🔗 Copy Invite Link</button>
+      </div>
+      <div id="boardAdminActions" style="display:none;gap:8px;flex-wrap:wrap;justify-content:flex-end;"></div>
     </div>
   </div>
-
-  <div class="voter-banner">
+  <div class="voter-banner" id="voterBanner">
     <div>
-      <div class="voter-banner-name">🗳️ Voting in progress</div>
-      <div class="voter-banner-sub">Click any score button on a card to cast your vote — votes are anonymous</div>
+      <div class="voter-banner-name" id="voterBannerTitle">🗳️ Voting in progress</div>
+      <div class="voter-banner-sub" id="voterBannerSub">Click any score button on a card to cast your vote — votes are anonymous</div>
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
       <button id="downloadBtn" class="btn btn-gh" style="padding:7px 14px;font-size:12px;width:auto;background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);color:#fff;display:none;" onclick="downloadPDF()">⬇️ Download PDF</button>
+      <button id="backToDashBtn" class="btn btn-gh" style="padding:7px 14px;font-size:12px;width:auto;background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);color:#fff;display:none;" onclick="showAdminScreen()">← Dashboard</button>
     </div>
   </div>
-
   <div class="bgrid" id="bgrid"></div>
 </div>
 
-<!-- Firebase SDKs -->
-<script type="module">
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-import { getDatabase, ref, set, get, onValue, runTransaction } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+<!-- ═══════════════ ADMIN SCREEN ═══════════════ -->
+<div class="screen" id="adminScreen">
+  <div class="admin-topbar">
+    <div class="admin-topbar-title">🛠️ Admin Dashboard</div>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <div class="user-chip" id="userChip">
+        <span class="user-chip-name" id="userChipName">—</span>
+      </div>
+      <button class="btn btn-gh" style="width:auto;padding:8px 14px;font-size:13px;" onclick="adminLogout()">Sign Out</button>
+    </div>
+  </div>
 
-// ── Firebase config ──
+  <div class="admin-layout">
+    <!-- Sidebar: ARTs -->
+    <div class="admin-sidebar">
+      <div class="admin-card">
+        <div class="admin-card-title">🏛️ My ARTs</div>
+        <div id="artListAdmin" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;"></div>
+        <div style="border-top:1px solid var(--bo);padding-top:12px;">
+          <label class="lbl">New ART</label>
+          <input class="field" type="text" id="newArtName" placeholder="ART Name" />
+          <button class="btn btn-teal" onclick="createART()">+ Create ART</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main: Selected ART details + Sessions -->
+    <div class="admin-main">
+      <div class="admin-card" id="artDetailCard" style="display:none;">
+        <div class="admin-card-title" id="artDetailTitle">Teams</div>
+        <div id="artTeamList" style="display:flex;flex-direction:column;gap:7px;margin-bottom:12px;"></div>
+        <div style="display:flex;gap:8px;">
+          <input class="field" type="text" id="newTeamName" placeholder="New team name" style="margin-bottom:0;flex:1;" />
+          <button class="btn btn-teal" style="width:auto;padding:10px 16px;font-size:13px;" onclick="addTeamToART()">+ Add</button>
+        </div>
+        <div style="margin-top:16px;">
+          <button class="btn btn-or" onclick="startAdminSession()">🚀 Start New Session for this ART</button>
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <div class="tab-row">
+          <button class="tab-btn active" id="tabActive" onclick="switchTab('active')">Active Sessions</button>
+          <button class="tab-btn" id="tabClosed" onclick="switchTab('closed')">Closed Sessions</button>
+        </div>
+        <div id="sessionListAdmin"><div class="empty-state">Select an ART to see sessions.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ FIREBASE ═══════════════ -->
+<script type="module">
+import { initializeApp }           from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { getDatabase, ref, set, get, push, onValue, update, remove }
+                                    from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+                                    from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+
 const firebaseConfig = {
   apiKey: "AIzaSyAfijlq8zBdtcr69YP0zx5-nKbPhW8Ovvs",
   authDomain: "pi-confidence-vote.firebaseapp.com",
@@ -265,58 +351,90 @@ const firebaseConfig = {
   appId: "1:805855420590:web:09d4889c1dbb7238d78d3f"
 };
 
-const app = initializeApp(firebaseConfig);
-const db  = getDatabase(app);
+const app  = initializeApp(firebaseConfig);
+const db   = getDatabase(app);
+const auth = getAuth(app);
+const gProvider = new GoogleAuthProvider();
 
 // ── State ──
-let activeSid    = null;
-let currentUser  = null;
-let isHost       = false;
-let sessionData  = null;
-let unsubscribe  = null;
+let currentUser   = null; // anon voter ID
+let adminUser     = null; // Firebase auth user
+let activeSid     = null;
+let sessionData   = null;
+let isHost        = false;
+let isAdminBoard  = false;
+let isBoardClosed = false;
+let unsubBoard    = null;
+let unsubSessions = null;
+let selectedArtId = null;
+let selectedArtData = null;
+let adminARTs     = {};   // { artId: { name, teams: {...} } }
+let allSessions   = {};   // all sessions for selected ART
+let activeTab     = 'active';
 
 const BC = ['','#e05252','#e88c4a','#c8a000','#7ec87a','#3aab6d'];
 const EM = ['','😟','😕','😐','🙂','😄'];
 
-// ── Expose globals needed by onclick handlers ──
-window.toggleCol    = toggleCol;
-window.goToConfig   = goToConfig;
-window.addTeam      = addTeam;
-window.createSession= createSession;
-window.quickJoin    = quickJoin;
-window.showScreen   = showScreen;
-window.copyLink     = copyLink;
-window.castVote     = castVote;
-window.downloadPDF  = downloadPDF;
+// ── Globals ──
+window.toggleCol        = toggleCol;
+window.goToConfig       = goToConfig;
+window.addTeam          = addTeam;
+window.createAnonSession= createAnonSession;
+window.quickJoin        = quickJoin;
+window.showScreen       = showScreen;
+window.copyLink         = copyLink;
+window.castVote         = castVote;
+window.downloadPDF      = downloadPDF;
+window.adminLogin       = adminLogin;
+window.adminLogout      = adminLogout;
+window.createART        = createART;
+window.deleteART        = deleteART;
+window.selectART        = selectART;
+window.addTeamToART     = addTeamToART;
+window.removeTeamFromART= removeTeamFromART;
+window.startAdminSession= startAdminSession;
+window.openSession      = openSession;
+window.closeSession     = closeSession;
+window.showAdminScreen  = showAdminScreen;
+window.switchTab        = switchTab;
 
 // ── Init ──
 document.addEventListener('DOMContentLoaded', async () => {
-  const params = new URLSearchParams(location.search);
-  let joinId = params.get('join');
-  if (!joinId) {
-    const m = location.hash.match(/^#join\/([A-Z0-9]{6})$/);
-    if (m) joinId = m[1];
-  }
+  // Auth state listener
+  onAuthStateChanged(auth, async user => {
+    adminUser = user;
+    const params = new URLSearchParams(location.search);
+    const joinId = params.get('join');
 
-  document.getElementById('loadingBox').style.display = 'none';
-
-  if (joinId) {
-    const sid = joinId.toUpperCase();
-    const snap = await get(ref(db, `sessions/${sid}`));
-    if (snap.exists()) {
-      const s = snap.val();
-      activeSid = sid;
-      document.getElementById('qjArtName').textContent = s.art;
-      document.getElementById('qjSub').textContent = `You've been invited to vote in "${s.art}". Votes are anonymous.`;
-      showScreen('quickJoinScreen');
+    if (joinId) {
+      await handleJoinLink(joinId.toUpperCase());
+    } else if (user) {
+      await loadAdminData();
+      showAdminScreen();
     } else {
+      document.getElementById('loadingBox').style.display = 'none';
       showScreen('homeScreen');
-      toast(`Session not found. Ask the host for a new invite link.`);
     }
+  });
+});
+
+async function handleJoinLink(sid) {
+  const snap = await get(ref(db, `sessions/${sid}`));
+  document.getElementById('loadingBox').style.display = 'none';
+  if (snap.exists() && snap.val().status !== 'closed') {
+    activeSid = sid;
+    const s = snap.val();
+    document.getElementById('qjArtName').textContent = s.art;
+    document.getElementById('qjSub').textContent = `You've been invited to vote in "${s.art}". Votes are anonymous.`;
+    showScreen('quickJoinScreen');
+  } else if (snap.exists() && snap.val().status === 'closed') {
+    showScreen('homeScreen');
+    toast('This voting session has been closed.');
   } else {
     showScreen('homeScreen');
+    toast('Session not found. Ask the host for a new invite link.');
   }
-});
+}
 
 // ── Utils ──
 function uid() { return Math.random().toString(36).slice(2,8).toUpperCase(); }
@@ -335,14 +453,8 @@ function toast(m, d=2600) {
   setTimeout(() => t.classList.remove('show'), d);
 }
 
-function showErr(id, m) {
-  const e = document.getElementById(id);
-  e.textContent = m; e.classList.add('show');
-  setTimeout(() => e.classList.remove('show'), 6000);
-}
-
 function sStyle(v) {
-  if (!v || v === '—') return {bg:'#f0f4f3', c:'#6b8c87'};
+  if (!v || v==='—') return {bg:'#f0f4f3', c:'#6b8c87'};
   const n = parseFloat(v);
   if (n < 1.5) return {bg:'#fde8e8', c:'#e05252'};
   if (n < 2.5) return {bg:'#fdf0e0', c:'#e88c4a'};
@@ -355,27 +467,35 @@ function buildShareUrl(sid) {
   return `${location.origin}${location.pathname}?join=${sid}`;
 }
 
-// ── Home / Config ──
+function votesArray(obj) {
+  if (!obj) return [];
+  if (Array.isArray(obj)) return obj;
+  return Object.values(obj);
+}
+
+// ── Anon flow ──
 function goToConfig() {
+  document.getElementById('cfgArt').value = '';
   document.getElementById('teamList').innerHTML = '';
-  addTeam('Team 1'); addTeam('Team 2');
+  addTeam('teamList', 'Team 1');
+  addTeam('teamList', 'Team 2');
   showScreen('configScreen');
 }
 
-function addTeam(name = '') {
-  const list = document.getElementById('teamList');
-  const id   = uid();
-  const row  = document.createElement('div');
+function addTeam(listId='teamList', name='') {
+  const list = document.getElementById(listId);
+  if (!list) return;
+  const id  = uid();
+  const row = document.createElement('div');
   row.className = 'trow'; row.dataset.id = id;
   const idx = list.children.length + 1;
   row.innerHTML = `<input class="field" style="margin-bottom:0;" type="text" placeholder="Team ${idx}" value="${name}" /><button class="btnx" onclick="this.parentElement.remove()">×</button>`;
   list.appendChild(row);
 }
 
-async function createSession() {
-  const art  = document.getElementById('cfgArt').value.trim();
-  if (!art)  { toast('Enter ART name!'); return; }
-
+async function createAnonSession() {
+  const art   = document.getElementById('cfgArt').value.trim();
+  if (!art) { toast('Enter ART name!'); return; }
   const rows  = document.querySelectorAll('#teamList .trow');
   const teams = [];
   rows.forEach(r => {
@@ -392,151 +512,385 @@ async function createSession() {
   teams.forEach(t => { votes[t.id] = {}; });
   votes['ART'] = {};
 
-  const sessionObj = { art, teams, votes, createdAt: Date.now() };
-
   try {
-    await set(ref(db, `sessions/${sid}`), sessionObj);
-  } catch(e) {
-    btn.disabled = false; btn.innerHTML = '🚀 Create Session';
-    toast('Error creating session: ' + e.message); return;
-  }
-
+    await set(ref(db, `sessions/${sid}`), { art, teams, votes, status:'active', adminUid: null, createdAt: Date.now() });
+    currentUser = 'anon_' + uid();
+    isHost = true; isAdminBoard = false; isBoardClosed = false;
+    activeSid = sid;
+    openBoard(sid);
+  } catch(e) { toast('Error: ' + e.message); }
   btn.disabled = false; btn.innerHTML = '🚀 Create Session';
-  activeSid   = sid;
-  currentUser = 'anon_' + uid(); // anonymous host voter ID
-  isHost      = true;
-  openBoard(sid);
 }
 
-// ── Join ──
 async function quickJoin() {
-  if (!activeSid) { showErr('qjErr', 'Session not found. Please use the invite link again.'); return; }
-
+  if (!activeSid) { showErr('qjErr', 'Session not found. Use the invite link again.'); return; }
   const btn = document.getElementById('qjBtn');
   btn.disabled = true; btn.textContent = 'Joining…';
-
   const snap = await get(ref(db, `sessions/${activeSid}`));
   btn.disabled = false; btn.textContent = 'Join & Vote →';
-
-  if (!snap.exists()) {
-    showErr('qjErr', 'Session no longer exists. Ask the host to create a new one.');
-    return;
-  }
-
-  currentUser = 'anon_' + uid(); // unique anonymous ID per browser visit
-  isHost      = false;
+  if (!snap.exists()) { showErr('qjErr', 'Session no longer exists.'); return; }
+  currentUser = 'anon_' + uid();
+  isHost = false; isAdminBoard = false; isBoardClosed = false;
   openBoard(activeSid);
 }
 
+function showErr(id, m) {
+  const e = document.getElementById(id);
+  if (!e) return;
+  e.textContent = m; e.classList.add('show');
+  setTimeout(() => e.classList.remove('show'), 6000);
+}
+
+// ── Admin Auth ──
+async function adminLogin() {
+  try { await signInWithPopup(auth, gProvider); }
+  catch(e) { toast('Sign-in failed: ' + e.message); }
+}
+
+async function adminLogout() {
+  if (unsubSessions) { unsubSessions(); unsubSessions = null; }
+  await signOut(auth);
+  showScreen('homeScreen');
+}
+
+// ── Admin Data ──
+async function loadAdminData() {
+  if (!adminUser) return;
+  const snap = await get(ref(db, `arts/${adminUser.uid}`));
+  adminARTs = snap.exists() ? snap.val() : {};
+  document.getElementById('loadingBox').style.display = 'none';
+}
+
+function showAdminScreen() {
+  if (unsubBoard) { unsubBoard(); unsubBoard = null; }
+  if (adminUser) {
+    document.getElementById('userChipName').textContent = adminUser.displayName || adminUser.email;
+    const img = adminUser.photoURL;
+    const chip = document.getElementById('userChip');
+    if (img) {
+      if (!document.getElementById('userChipImg')) {
+        const im = document.createElement('img'); im.id='userChipImg';
+        chip.insertBefore(im, chip.firstChild);
+      }
+      document.getElementById('userChipImg').src = img;
+    }
+  }
+  renderARTList();
+  showScreen('adminScreen');
+
+  if (selectedArtId) {
+    loadSessionsForART(selectedArtId);
+  }
+}
+
+function renderARTList() {
+  const el = document.getElementById('artListAdmin');
+  const keys = Object.keys(adminARTs);
+  if (!keys.length) {
+    el.innerHTML = '<div class="empty-state" style="padding:12px;">No ARTs yet. Create one below.</div>';
+    return;
+  }
+  el.innerHTML = keys.map(id => {
+    const a = adminARTs[id];
+    const teamCount = a.teams ? Object.keys(a.teams).length : 0;
+    const sel = selectedArtId === id ? 'selected' : '';
+    return `<div class="art-item ${sel}" onclick="selectART('${id}')">
+      <div>
+        <div class="art-item-name">${a.name}</div>
+        <div class="art-item-sub">${teamCount} team${teamCount!==1?'s':''}</div>
+      </div>
+      <div class="art-item-actions">
+        <button class="icon-btn del" onclick="event.stopPropagation();deleteART('${id}')" title="Delete">🗑️</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function createART() {
+  const name = document.getElementById('newArtName').value.trim();
+  if (!name) { toast('Enter ART name!'); return; }
+  if (!adminUser) return;
+  const artRef = push(ref(db, `arts/${adminUser.uid}`));
+  await set(artRef, { name, teams: {} });
+  adminARTs[artRef.key] = { name, teams: {} };
+  document.getElementById('newArtName').value = '';
+  renderARTList();
+  selectART(artRef.key);
+  toast('ART created!');
+}
+
+async function deleteART(artId) {
+  if (!confirm(`Delete this ART and all its teams? Sessions will remain.`)) return;
+  await remove(ref(db, `arts/${adminUser.uid}/${artId}`));
+  delete adminARTs[artId];
+  if (selectedArtId === artId) {
+    selectedArtId = null; selectedArtData = null;
+    document.getElementById('artDetailCard').style.display = 'none';
+    document.getElementById('sessionListAdmin').innerHTML = '<div class="empty-state">Select an ART to see sessions.</div>';
+  }
+  renderARTList();
+  toast('ART deleted.');
+}
+
+function selectART(artId) {
+  selectedArtId = artId;
+  selectedArtData = adminARTs[artId];
+  renderARTList();
+  renderARTDetail();
+  loadSessionsForART(artId);
+}
+
+function renderARTDetail() {
+  if (!selectedArtData) return;
+  const card = document.getElementById('artDetailCard');
+  card.style.display = 'block';
+  document.getElementById('artDetailTitle').textContent = `🏛️ ${selectedArtData.name} — Teams`;
+  const teamList = document.getElementById('artTeamList');
+  const teams = selectedArtData.teams || {};
+  const keys = Object.keys(teams);
+  if (!keys.length) {
+    teamList.innerHTML = '<div class="empty-state" style="padding:8px;">No teams yet.</div>';
+    return;
+  }
+  teamList.innerHTML = keys.map(tid => `
+    <div class="trow">
+      <div class="field" style="margin-bottom:0;flex:1;background:var(--tl);border-color:var(--bo);cursor:default;">${teams[tid].name}</div>
+      <button class="btnx" onclick="removeTeamFromART('${tid}')" title="Remove">×</button>
+    </div>`).join('');
+}
+
+async function addTeamToART() {
+  const name = document.getElementById('newTeamName').value.trim();
+  if (!name || !selectedArtId || !adminUser) return;
+  const teamRef = push(ref(db, `arts/${adminUser.uid}/${selectedArtId}/teams`));
+  await set(teamRef, { name });
+  if (!adminARTs[selectedArtId].teams) adminARTs[selectedArtId].teams = {};
+  adminARTs[selectedArtId].teams[teamRef.key] = { name };
+  selectedArtData = adminARTs[selectedArtId];
+  document.getElementById('newTeamName').value = '';
+  renderARTDetail();
+  renderARTList();
+  toast('Team added!');
+}
+
+async function removeTeamFromART(tid) {
+  if (!selectedArtId || !adminUser) return;
+  await remove(ref(db, `arts/${adminUser.uid}/${selectedArtId}/teams/${tid}`));
+  delete adminARTs[selectedArtId].teams[tid];
+  selectedArtData = adminARTs[selectedArtId];
+  renderARTDetail();
+  renderARTList();
+  toast('Team removed.');
+}
+
+// ── Admin Sessions ──
+function loadSessionsForART(artId) {
+  if (unsubSessions) { unsubSessions(); unsubSessions = null; }
+  if (!adminUser) return;
+
+  const sessRef = ref(db, `sessions`);
+  unsubSessions = onValue(sessRef, snap => {
+    allSessions = {};
+    if (snap.exists()) {
+      snap.forEach(child => {
+        const s = child.val();
+        if (s.adminUid === adminUser.uid && s.artId === artId) {
+          allSessions[child.key] = s;
+        }
+      });
+    }
+    renderSessionList();
+  });
+}
+
+function switchTab(tab) {
+  activeTab = tab;
+  document.getElementById('tabActive').classList.toggle('active', tab==='active');
+  document.getElementById('tabClosed').classList.toggle('active', tab==='closed');
+  renderSessionList();
+}
+
+function renderSessionList() {
+  const el = document.getElementById('sessionListAdmin');
+  const filtered = Object.entries(allSessions).filter(([,s]) =>
+    activeTab === 'active' ? s.status !== 'closed' : s.status === 'closed'
+  ).sort(([,a],[,b]) => b.createdAt - a.createdAt);
+
+  if (!filtered.length) {
+    el.innerHTML = `<div class="empty-state">No ${activeTab} sessions for this ART.</div>`;
+    return;
+  }
+
+  el.innerHTML = filtered.map(([sid, s]) => {
+    const date = new Date(s.createdAt).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+    const time = new Date(s.createdAt).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+    const totalVotes = Object.values(s.votes||{}).reduce((acc, v) => acc + Object.keys(v).length, 0);
+    const isActive = s.status !== 'closed';
+    return `<div class="session-item ${isActive?'':'closed'}">
+      <div class="session-item-info">
+        <div class="session-item-title">${s.art} <span class="status-badge ${isActive?'active':'closed'}">${isActive?'● Active':'✓ Closed'}</span></div>
+        <div class="session-item-meta">${date} ${time} · ${s.teams?.length||0} teams · ${totalVotes} votes · ID: ${sid}</div>
+      </div>
+      <div class="session-item-actions">
+        ${isActive ? `<button class="btn btn-gh" style="padding:6px 12px;font-size:12px;width:auto;" onclick="copySessionLink('${sid}')">🔗 Copy Link</button>` : ''}
+        <button class="btn btn-teal" style="padding:6px 12px;font-size:12px;width:auto;" onclick="openSession('${sid}')">👁 View</button>
+        ${isActive ? `<button class="btn btn-red" style="padding:6px 12px;font-size:12px;width:auto;" onclick="closeSession('${sid}')">⏹ Close</button>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function startAdminSession() {
+  if (!selectedArtId || !selectedArtData || !adminUser) return;
+  const teams = selectedArtData.teams || {};
+  const teamArr = Object.entries(teams).map(([id, t]) => ({id, name: t.name}));
+  if (!teamArr.length) { toast('Add at least one team to this ART first!'); return; }
+
+  const sid   = uid();
+  const votes = {};
+  teamArr.forEach(t => { votes[t.id] = {}; });
+  votes['ART'] = {};
+
+  await set(ref(db, `sessions/${sid}`), {
+    art: selectedArtData.name,
+    artId: selectedArtId,
+    adminUid: adminUser.uid,
+    teams: teamArr,
+    votes,
+    status: 'active',
+    createdAt: Date.now()
+  });
+
+  currentUser = 'admin_' + uid();
+  isHost = true; isAdminBoard = true; isBoardClosed = false;
+  activeSid = sid;
+  openBoard(sid);
+  toast('Session started!');
+}
+
+function openSession(sid) {
+  const s = allSessions[sid];
+  if (!s) return;
+  isBoardClosed = s.status === 'closed';
+  isHost = true; isAdminBoard = true;
+  activeSid = sid;
+  currentUser = 'admin_view';
+  openBoard(sid);
+}
+
+async function closeSession(sid) {
+  if (!confirm('Close this voting session? Participants will no longer be able to vote.')) return;
+  await update(ref(db, `sessions/${sid}`), { status: 'closed' });
+  toast('Session closed.');
+}
+
+window.copySessionLink = function(sid) {
+  navigator.clipboard && navigator.clipboard.writeText(buildShareUrl(sid));
+  toast('Link copied!');
+};
+
 // ── Board ──
 function openBoard(sid) {
+  if (unsubBoard) { unsubBoard(); unsubBoard = null; }
+
   document.getElementById('boardTitle').textContent = '…';
   document.getElementById('boardSub').textContent   = 'Connecting…';
+  document.getElementById('bgrid').innerHTML        = '';
 
+  // Share box — host only
   const sb = document.getElementById('shareBox');
-  if (isHost) {
+  if (isHost && !isBoardClosed) {
     sb.style.display = 'block';
-    const url = buildShareUrl(sid);
-    document.getElementById('shareHint').textContent = url;
-    document.getElementById('downloadBtn').style.display = 'flex';
+    document.getElementById('shareHint').textContent = buildShareUrl(sid);
   } else {
     sb.style.display = 'none';
-    document.getElementById('downloadBtn').style.display = 'none';
   }
+
+  // Download button
+  document.getElementById('downloadBtn').style.display = isHost ? 'flex' : 'none';
+
+  // Back to dashboard button
+  document.getElementById('backToDashBtn').style.display = isAdminBoard ? 'flex' : 'none';
+
+  // Admin close/status actions
+  const adminAct = document.getElementById('boardAdminActions');
+  if (isAdminBoard && !isBoardClosed) {
+    adminAct.style.display = 'flex';
+    adminAct.innerHTML = `<button class="btn btn-red" style="padding:8px 14px;font-size:12px;width:auto;" onclick="closeSession('${sid}');showAdminScreen()">⏹ Close Session</button>`;
+  } else {
+    adminAct.style.display = 'none';
+  }
+
+  // Board readonly for closed sessions
+  document.getElementById('boardScreen').classList.toggle('board-readonly', isBoardClosed);
 
   showScreen('boardScreen');
 
-  if (unsubscribe) unsubscribe();
-  const sessRef = ref(db, `sessions/${sid}`);
-  unsubscribe = onValue(sessRef, snap => {
+  unsubBoard = onValue(ref(db, `sessions/${sid}`), snap => {
     if (!snap.exists()) { toast('Session ended.'); showScreen('homeScreen'); return; }
     sessionData = snap.val();
+    isBoardClosed = sessionData.status === 'closed';
     document.getElementById('boardTitle').textContent = sessionData.art + ' — PI Confidence Vote';
-    document.getElementById('boardSub').textContent   = 'Voting in progress…';
+
+    if (isBoardClosed) {
+      document.getElementById('boardSub').textContent = 'This session is closed.';
+      document.getElementById('voterBannerTitle').textContent = '✓ Voting Closed';
+      document.getElementById('voterBannerSub').textContent   = 'This session has been closed by the admin. Results are final.';
+      document.getElementById('boardScreen').classList.add('board-readonly');
+      document.getElementById('shareBox').style.display = 'none';
+      document.getElementById('boardAdminActions').style.display = 'none';
+    } else {
+      document.getElementById('boardSub').textContent = 'Voting in progress…';
+      document.getElementById('voterBannerTitle').textContent = '🗳️ Voting in progress';
+      document.getElementById('voterBannerSub').textContent   = 'Click any score button on a card to cast your vote — votes are anonymous';
+    }
+
     renderBoard(sessionData);
   });
 }
 
 function renderBoard(s) {
   const grid = document.getElementById('bgrid');
+  const existingIds = [...grid.querySelectorAll('.vc-card[data-tid]')].map(el=>el.dataset.tid);
+  const newIds = [...(s.teams||[]).map(t=>t.id), 'ART'];
+  if (JSON.stringify(existingIds) !== JSON.stringify(newIds)) buildCards(s);
 
-  // Build cards if not yet built or teams changed
-  const existingTeamIds = [...grid.querySelectorAll('.vc-card[data-tid]')].map(el => el.dataset.tid);
-  const newTeamIds      = s.teams.map(t => t.id);
-  const needRebuild     = JSON.stringify(existingTeamIds) !== JSON.stringify(newTeamIds);
-
-  if (needRebuild) buildCards(s);
-
-  // Update stats for each team
-  s.teams.forEach(t => {
-    const votes = votesArray(s.votes[t.id]);
-    updateTeamStats(t.id, votes);
+  (s.teams||[]).forEach(t => {
+    updateTeamStats(t.id, votesArray(s.votes?.[t.id]));
   });
-
-  // Update ART stats
-  const artVotes = votesArray(s.votes['ART']);
-  updateArtStats(artVotes);
-}
-
-// Firebase stores arrays as objects {voterKey: {score}} — convert
-function votesArray(obj) {
-  if (!obj) return [];
-  if (Array.isArray(obj)) return obj;
-  return Object.values(obj);
+  updateArtStats(votesArray(s.votes?.['ART']));
 }
 
 function buildCards(s) {
   const grid = document.getElementById('bgrid');
   grid.innerHTML = '';
-
-  s.teams.forEach(t => {
+  (s.teams||[]).forEach(t => {
     const card = document.createElement('div');
-    card.className = 'vc-card'; card.id = 'card_'+t.id; card.dataset.tid = t.id;
-    card.innerHTML = `
-      <div class="vch team-hdr">
-        <h3>${t.name}</h3>
-        <span class="bdg" id="bdg_${t.id}">0 votes</span>
-      </div>
+    card.className='vc-card'; card.id='card_'+t.id; card.dataset.tid=t.id;
+    card.innerHTML=`
+      <div class="vch team-hdr"><h3>${t.name}</h3><span class="bdg" id="bdg_${t.id}">0 votes</span></div>
       <div class="vcb">
-        <div class="bars">
-          ${[1,2,3,4,5].map(i=>`<div class="bcol"><div class="bnum" id="bn_${t.id}_${i}">0</div><div class="bw"><div class="bar" id="b_${t.id}_${i}" style="height:0%;background:${BC[i]}"></div></div><div class="blbl">${i}</div></div>`).join('')}
-        </div>
-        <div class="avg-row">
-          <span class="avg-l">Team Average</span>
-          <span class="avg-v" id="avg_${t.id}">—</span>
-        </div>
+        <div class="bars">${[1,2,3,4,5].map(i=>`<div class="bcol"><div class="bnum" id="bn_${t.id}_${i}">0</div><div class="bw"><div class="bar" id="b_${t.id}_${i}" style="height:0%;background:${BC[i]}"></div></div><div class="blbl">${i}</div></div>`).join('')}</div>
+        <div class="avg-row"><span class="avg-l">Team Average</span><span class="avg-v" id="avg_${t.id}">—</span></div>
         <div class="vote-section">
           <div class="vote-section-label">Your vote for this team:</div>
-          <div class="inline-btns">
-            ${[1,2,3,4,5].map(i=>`<button class="ivb s${i}" id="ivb_${t.id}_${i}" onclick="castVote('${t.id}',${i})">${i}<span class="ivb-em">${EM[i]}</span></button>`).join('')}
-          </div>
+          <div class="inline-btns">${[1,2,3,4,5].map(i=>`<button class="ivb s${i}" id="ivb_${t.id}_${i}" onclick="castVote('${t.id}',${i})">${i}<span class="ivb-em">${EM[i]}</span></button>`).join('')}</div>
           <div class="vote-status" id="vs_${t.id}"></div>
         </div>
       </div>`;
     grid.appendChild(card);
   });
 
-  // ART card — full width
   const artCard = document.createElement('div');
-  artCard.className = 'vc-card art-card-full'; artCard.id = 'card_ART'; artCard.dataset.tid = 'ART';
-  artCard.innerHTML = `
-    <div class="vch art-hdr">
-      <h3>🗳️ PI Planning — ART Level Confidence Vote</h3>
-      <span class="bdg" id="bdg_ART">0 votes</span>
-    </div>
+  artCard.className='vc-card art-card-full'; artCard.id='card_ART'; artCard.dataset.tid='ART';
+  artCard.innerHTML=`
+    <div class="vch art-hdr"><h3>🗳️ PI Planning — ART Level Confidence Vote</h3><span class="bdg" id="bdg_ART">0 votes</span></div>
     <div class="vcb">
-      <div class="art-bars">
-        ${[1,2,3,4,5].map(i=>`<div class="acol"><div class="anum" id="an_${i}">0</div><div class="abw"><div class="abar" id="ab_${i}" style="height:0%;background:${BC[i]}"></div></div><div class="albl">${['NO CONF.','LITTLE','GOOD','HIGH','V.HIGH'][i-1]}</div></div>`).join('')}
-      </div>
-      <div class="art-avg-row">
-        <span class="art-avg-l">Overall ART Average</span>
-        <span class="art-avg-v" id="avg_ART">—</span>
-      </div>
+      <div class="art-bars">${[1,2,3,4,5].map(i=>`<div class="acol"><div class="anum" id="an_${i}">0</div><div class="abw"><div class="abar" id="ab_${i}" style="height:0%;background:${BC[i]}"></div></div><div class="albl">${['NO CONF.','LITTLE','GOOD','HIGH','V.HIGH'][i-1]}</div></div>`).join('')}</div>
+      <div class="art-avg-row"><span class="art-avg-l">Overall ART Average</span><span class="art-avg-v" id="avg_ART">—</span></div>
       <div class="vote-section">
         <div class="vote-section-label">Your vote for the overall PI plan (ART level):</div>
-        <div class="inline-btns">
-          ${[1,2,3,4,5].map(i=>`<button class="ivb s${i}" id="ivb_ART_${i}" onclick="castVote('ART',${i})">${i}<span class="ivb-em">${EM[i]}</span></button>`).join('')}
-        </div>
+        <div class="inline-btns">${[1,2,3,4,5].map(i=>`<button class="ivb s${i}" id="ivb_ART_${i}" onclick="castVote('ART',${i})">${i}<span class="ivb-em">${EM[i]}</span></button>`).join('')}</div>
         <div class="vote-status" id="vs_ART"></div>
       </div>
     </div>`;
@@ -545,328 +899,119 @@ function buildCards(s) {
 
 function updateTeamStats(tid, votes) {
   const tot = votes.length;
-  const bdg = document.getElementById('bdg_'+tid);
-  if (bdg) bdg.textContent = tot + ' vote' + (tot !== 1 ? 's' : '');
-
-  const cnt = [0,0,0,0,0];
-  votes.forEach(v => cnt[v.score-1]++);
-  const mx = Math.max(...cnt, 1);
-
-  [1,2,3,4,5].forEach(i => {
-    const bar = document.getElementById(`b_${tid}_${i}`);
-    const num = document.getElementById(`bn_${tid}_${i}`);
-    if (bar) bar.style.height = Math.round(cnt[i-1]/mx*100) + '%';
-    if (num) num.textContent  = cnt[i-1];
+  const bdg = document.getElementById('bdg_'+tid); if(bdg) bdg.textContent = tot+' vote'+(tot!==1?'s':'');
+  const cnt = [0,0,0,0,0]; votes.forEach(v=>cnt[v.score-1]++);
+  const mx  = Math.max(...cnt,1);
+  [1,2,3,4,5].forEach(i=>{
+    const bar=document.getElementById(`b_${tid}_${i}`); if(bar) bar.style.height=Math.round(cnt[i-1]/mx*100)+'%';
+    const num=document.getElementById(`bn_${tid}_${i}`); if(num) num.textContent=cnt[i-1];
   });
-
-  const ae = document.getElementById('avg_'+tid);
-  if (ae) {
-    if (tot > 0) {
-      const a = (votes.reduce((s,v) => s+v.score, 0) / tot).toFixed(1);
-      ae.textContent = a;
-      const c = sStyle(a); ae.style.background = c.bg; ae.style.color = c.c;
-    } else {
-      ae.textContent = '—'; ae.style.background = '#f0f4f3'; ae.style.color = '#6b8c87';
-    }
-  }
-
+  const ae=document.getElementById('avg_'+tid);
+  if(ae){ if(tot>0){const a=(votes.reduce((s,v)=>s+v.score,0)/tot).toFixed(1);ae.textContent=a;const c=sStyle(a);ae.style.background=c.bg;ae.style.color=c.c;}else{ae.textContent='—';ae.style.background='#f0f4f3';ae.style.color='#6b8c87';} }
   highlightMyVote(tid, votes);
 }
 
 function updateArtStats(votes) {
-  const tot = votes.length;
-  const bdg = document.getElementById('bdg_ART');
-  if (bdg) bdg.textContent = tot + ' vote' + (tot !== 1 ? 's' : '');
-
-  const cnt = [0,0,0,0,0];
-  votes.forEach(v => cnt[v.score-1]++);
-  const mx = Math.max(...cnt, 1);
-
-  [1,2,3,4,5].forEach(i => {
-    const bar = document.getElementById('ab_'+i);
-    const num = document.getElementById('an_'+i);
-    if (bar) bar.style.height = Math.round(cnt[i-1]/mx*100) + '%';
-    if (num) num.textContent  = cnt[i-1];
+  const tot=votes.length;
+  const bdg=document.getElementById('bdg_ART'); if(bdg) bdg.textContent=tot+' vote'+(tot!==1?'s':'');
+  const cnt=[0,0,0,0,0]; votes.forEach(v=>cnt[v.score-1]++);
+  const mx=Math.max(...cnt,1);
+  [1,2,3,4,5].forEach(i=>{
+    const bar=document.getElementById('ab_'+i); if(bar) bar.style.height=Math.round(cnt[i-1]/mx*100)+'%';
+    const num=document.getElementById('an_'+i); if(num) num.textContent=cnt[i-1];
   });
-
-  const ae = document.getElementById('avg_ART');
-  if (ae) {
-    if (tot > 0) {
-      const a = (votes.reduce((s,v) => s+v.score, 0) / tot).toFixed(1);
-      ae.textContent = a;
-      const c = sStyle(a); ae.style.background = c.bg; ae.style.color = c.c;
-    } else {
-      ae.textContent = '—'; ae.style.background = 'transparent'; ae.style.color = '#6b8c87';
-    }
-  }
-
+  const ae=document.getElementById('avg_ART');
+  if(ae){ if(tot>0){const a=(votes.reduce((s,v)=>s+v.score,0)/tot).toFixed(1);ae.textContent=a;const c=sStyle(a);ae.style.background=c.bg;ae.style.color=c.c;}else{ae.textContent='—';ae.style.background='transparent';ae.style.color='#6b8c87';} }
   highlightMyVote('ART', votes);
 }
 
 function highlightMyVote(tid, votes) {
-  const myVote = votes.find(v => v.voter === currentUser);
-  [1,2,3,4,5].forEach(i => {
-    const btn = document.getElementById(`ivb_${tid}_${i}`);
-    if (btn) btn.classList.toggle('voted-this', !!(myVote && myVote.score === i));
+  const myVote = votes.find(v=>v.voter===currentUser);
+  [1,2,3,4,5].forEach(i=>{
+    const btn=document.getElementById(`ivb_${tid}_${i}`);
+    if(btn) btn.classList.toggle('voted-this', !!(myVote&&myVote.score===i));
   });
-  const vs = document.getElementById('vs_'+tid);
-  if (vs) {
-    if (myVote) { vs.textContent = '✓ You voted ' + myVote.score; vs.className = 'vote-status ok'; }
-    else        { vs.textContent = 'No vote yet'; vs.className = 'vote-status'; }
-  }
+  const vs=document.getElementById('vs_'+tid);
+  if(vs){ if(myVote){vs.textContent='✓ You voted '+myVote.score;vs.className='vote-status ok';}else{vs.textContent='No vote yet';vs.className='vote-status';} }
 }
 
 async function castVote(tid, score) {
-  if (!activeSid || !currentUser) { toast('Please join a session first!'); return; }
-
-  // Use voter's name as key so each person has exactly one vote per target
-  const voterKey = currentUser.replace(/[.#$/\[\]]/g, '_'); // sanitize for Firebase key
-  const voteRef  = ref(db, `sessions/${activeSid}/votes/${tid}/${voterKey}`);
-
-  try {
-    await set(voteRef, { voter: currentUser, score });
-    const tname = tid === 'ART'
-      ? (sessionData?.art || 'ART') + ' (ART level)'
-      : sessionData?.teams?.find(t => t.id === tid)?.name || tid;
-    toast(`Voted ${score} for ${tname} ✅`);
-  } catch(e) {
-    toast('Error saving vote: ' + e.message);
-  }
+  if (!activeSid || !currentUser || isBoardClosed) return;
+  const voterKey = currentUser.replace(/[.#$/\[\]]/g,'_');
+  await set(ref(db, `sessions/${activeSid}/votes/${tid}/${voterKey}`), {voter:currentUser, score});
+  const tname = tid==='ART' ? (sessionData?.art||'ART')+' (ART)' : sessionData?.teams?.find(t=>t.id===tid)?.name||tid;
+  toast(`Voted ${score} for ${tname} ✅`);
 }
 
 function copyLink() {
   const url = buildShareUrl(activeSid);
   navigator.clipboard && navigator.clipboard.writeText(url);
   const b = document.getElementById('copyLinkBtn');
-  b.textContent = '✓ Link Copied!'; b.classList.add('done');
-  setTimeout(() => { b.innerHTML = '🔗 Copy Invite Link'; b.classList.remove('done'); }, 2000);
+  b.textContent='✓ Copied!'; b.classList.add('done');
+  setTimeout(()=>{b.innerHTML='🔗 Copy Invite Link';b.classList.remove('done');},2000);
   toast('Invite link copied!');
 }
 
+// ── PDF Export ──
 function downloadPDF() {
   const btn = document.getElementById('downloadBtn');
-  btn.textContent = '⏳ Generating…'; btn.disabled = true;
-
+  btn.textContent='⏳ Generating…'; btn.disabled=true;
   try {
-    const { jsPDF } = window.jspdf;
-    const s        = sessionData;
-    if (!s) { toast('No session data!'); return; }
-
-    const dateStr  = new Date().toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'});
-    const pdf      = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-    const PW       = pdf.internal.pageSize.getWidth();   // 297
-    const PH       = pdf.internal.pageSize.getHeight();  // 210
-    const MARGIN   = 10;
-    const COL_GAP  = 5;
-
-    // ── helpers ──
-    const rr = (x, y, w, h, r, fill, stroke) => {
-      pdf.setFillColor(...fill);
-      if (stroke) pdf.setDrawColor(...stroke); else pdf.setDrawColor(...fill);
-      pdf.roundedRect(x, y, w, h, r, r, stroke ? 'FD' : 'F');
-    };
-    const txt = (t, x, y, size, color, align='left', bold=false) => {
-      pdf.setFontSize(size);
-      pdf.setTextColor(...color);
-      pdf.setFont('helvetica', bold ? 'bold' : 'normal');
-      pdf.text(String(t), x, y, { align });
-    };
-    const bar = (x, y, w, h, pct, col) => {
-      // background
-      pdf.setFillColor(240, 244, 243);
-      pdf.roundedRect(x, y, w, h, 1, 1, 'F');
-      // filled portion
-      if (pct > 0) {
-        pdf.setFillColor(...col);
-        const fh = Math.max(h * pct, 1);
-        pdf.roundedRect(x, y + h - fh, w, fh, 1, 1, 'F');
-      }
-    };
-
-    const BAR_COLS = [
-      [224,82,82],[232,140,74],[200,160,0],[126,200,122],[58,171,109]
-    ];
-
-    const avgColor = (v) => {
-      if (!v || isNaN(v)) return [107,140,135];
-      if (v < 1.5) return [224,82,82];
-      if (v < 2.5) return [232,140,74];
-      if (v < 3.5) return [200,160,0];
-      if (v < 4.5) return [126,200,122];
-      return [58,171,109];
-    };
-    const avgBg = (v) => {
-      if (!v || isNaN(v)) return [240,244,243];
-      if (v < 1.5) return [253,232,232];
-      if (v < 2.5) return [253,240,224];
-      if (v < 3.5) return [254,250,224];
-      if (v < 4.5) return [232,248,232];
-      return [216,245,232];
-    };
-
-    // ── Page 1: Header + Team Cards ──
-    // Background
-    pdf.setFillColor(223, 240, 235);
-    pdf.rect(0, 0, PW, PH, 'F');
-
-    // Title bar
-    rr(MARGIN, MARGIN, PW - MARGIN*2, 18, 3, [45,122,110]);
-    txt('🗳️  ' + s.art + ' — PI Confidence Vote', MARGIN+5, MARGIN+7, 13, [255,255,255], 'left', true);
-    txt('Exported on ' + dateStr + '  ·  Session: ' + activeSid, MARGIN+5, MARGIN+13, 7, [200,235,228]);
-    txt('v1.0.0', PW - MARGIN - 2, MARGIN+13, 7, [200,235,228], 'right');
-
-    // Team cards — auto-layout
-    const teams     = s.teams || [];
-    const numTeams  = teams.length;
-    const COLS      = Math.min(numTeams, 3);
-    const ROWS      = Math.ceil(numTeams / COLS);
-    const cardY0    = MARGIN + 22;
-    const availW    = PW - MARGIN*2;
-    const availH    = PH - cardY0 - MARGIN;
-    const cardW     = (availW - COL_GAP * (COLS-1)) / COLS;
-    const cardH     = (availH - COL_GAP * (ROWS-1)) / ROWS;
-
-    teams.forEach((t, idx) => {
-      const col   = idx % COLS;
-      const row   = Math.floor(idx / COLS);
-      const cx    = MARGIN + col * (cardW + COL_GAP);
-      const cy    = cardY0 + row * (cardH + COL_GAP);
-
-      // Card bg
-      rr(cx, cy, cardW, cardH, 3, [255,255,255]);
-
-      // Header
-      rr(cx, cy, cardW, 8, 3, [245,166,35]);
-      // flatten bottom corners of header
-      pdf.setFillColor(245,166,35);
-      pdf.rect(cx, cy+4, cardW, 4, 'F');
-
-      const votes  = votesArray(s.votes[t.id]);
-      const total  = votes.length;
-      const cnt    = [0,0,0,0,0];
-      votes.forEach(v => cnt[v.score-1]++);
-      const mx     = Math.max(...cnt, 1);
-      const avg    = total > 0 ? votes.reduce((a,v)=>a+v.score,0)/total : null;
-
-      // Team name
-      txt(t.name.toUpperCase(), cx+3, cy+5.5, 7, [255,255,255], 'left', true);
-      // vote count badge
-      const bcTxt = total + ' vote' + (total!==1?'s':'');
-      const bcW   = bcTxt.length * 1.4 + 4;
-      rr(cx+cardW-bcW-2, cy+2, bcW, 4, 2, [255,255,255,0.3]);
-      pdf.setFillColor(255,255,255,80);
-      pdf.roundedRect(cx+cardW-bcW-2, cy+2, bcW, 4, 2, 2, 'F');
-      txt(bcTxt, cx+cardW-bcW/2-2, cy+5.2, 5.5, [255,255,255], 'center', true);
-
-      // Bars
-      const barAreaY = cy + 11;
-      const barAreaH = cardH - 28;
-      const barW     = (cardW - 10) / 5 - 2;
-      [0,1,2,3,4].forEach(i => {
-        const bx  = cx + 5 + i * (barW + 2);
-        const pct = cnt[i] / mx;
-        bar(bx, barAreaY, barW, barAreaH, pct, BAR_COLS[i]);
-        // count
-        txt(cnt[i], bx + barW/2, barAreaY + barAreaH + 3.5, 5.5, [26,46,43], 'center');
-        // label
-        txt(String(i+1), bx + barW/2, barAreaY + barAreaH + 7, 5, [107,140,135], 'center');
-      });
-
-      // Average
-      const avgY = cy + cardH - 8;
-      pdf.setDrawColor(200,224,219);
-      pdf.setLineWidth(0.3);
-      pdf.line(cx+3, avgY-1, cx+cardW-3, avgY-1);
-      txt('Team Average', cx+4, avgY+3.5, 6, [107,140,135]);
-      if (avg !== null) {
-        const ac = avgColor(avg); const ab = avgBg(avg);
-        rr(cx+cardW-18, avgY, 15, 7, 2, ab);
-        txt(avg.toFixed(1), cx+cardW-10.5, avgY+5, 9, ac, 'center', true);
-      } else {
-        txt('—', cx+cardW-10, avgY+4, 8, [107,140,135], 'center');
-      }
+    const {jsPDF} = window.jspdf;
+    const s = sessionData; if(!s){toast('No data!');return;}
+    const dateStr = new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+    const pdf = new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+    const PW=pdf.internal.pageSize.getWidth(), PH=pdf.internal.pageSize.getHeight(), M=10, G=5;
+    const rr=(x,y,w,h,r,fill)=>{pdf.setFillColor(...fill);pdf.roundedRect(x,y,w,h,r,r,'F');};
+    const txt=(t,x,y,sz,col,al='left',bold=false)=>{pdf.setFontSize(sz);pdf.setTextColor(...col);pdf.setFont('helvetica',bold?'bold':'normal');pdf.text(String(t),x,y,{align:al});};
+    const bar=(x,y,w,h,pct,col)=>{pdf.setFillColor(240,244,243);pdf.roundedRect(x,y,w,h,1,1,'F');if(pct>0){pdf.setFillColor(...col);const fh=Math.max(h*pct,1);pdf.roundedRect(x,y+h-fh,w,fh,1,1,'F');}};
+    const BC2=[[224,82,82],[232,140,74],[200,160,0],[126,200,122],[58,171,109]];
+    const avgC=(v)=>{if(!v||isNaN(v))return[107,140,135];if(v<1.5)return[224,82,82];if(v<2.5)return[232,140,74];if(v<3.5)return[200,160,0];if(v<4.5)return[126,200,122];return[58,171,109];};
+    const avgB=(v)=>{if(!v||isNaN(v))return[240,244,243];if(v<1.5)return[253,232,232];if(v<2.5)return[253,240,224];if(v<3.5)return[254,250,224];if(v<4.5)return[232,248,232];return[216,245,232];};
+    // Page 1: teams
+    pdf.setFillColor(223,240,235);pdf.rect(0,0,PW,PH,'F');
+    rr(M,M,PW-M*2,18,3,[45,122,110]);
+    txt('🗳️  '+s.art+' — PI Confidence Vote',M+5,M+7,13,[255,255,255],'left',true);
+    txt('Exported '+dateStr+'  ·  Session: '+activeSid,M+5,M+13,7,[200,235,228]);
+    const teams=s.teams||[],COLS=Math.min(teams.length,3),ROWS=Math.ceil(teams.length/COLS);
+    const cY0=M+22,avW=PW-M*2,avH=PH-cY0-M;
+    const cW=(avW-G*(COLS-1))/COLS,cH=(avH-G*(ROWS-1))/ROWS;
+    teams.forEach((t,idx)=>{
+      const col=idx%COLS,row=Math.floor(idx/COLS);
+      const cx=M+col*(cW+G),cy=cY0+row*(cH+G);
+      rr(cx,cy,cW,cH,3,[255,255,255]);
+      rr(cx,cy,cW,8,3,[245,166,35]);pdf.setFillColor(245,166,35);pdf.rect(cx,cy+4,cW,4,'F');
+      const votes=votesArray(s.votes?.[t.id]),total=votes.length;
+      const cnt=[0,0,0,0,0];votes.forEach(v=>cnt[v.score-1]++);
+      const mx=Math.max(...cnt,1),avg=total>0?votes.reduce((a,v)=>a+v.score,0)/total:null;
+      txt(t.name.toUpperCase(),cx+3,cy+5.5,7,[255,255,255],'left',true);
+      const bY=cy+11,bH=cH-28,bW=(cW-10)/5-2;
+      [0,1,2,3,4].forEach(i=>{const bx=cx+5+i*(bW+2);bar(bx,bY,bW,bH,cnt[i]/mx,BC2[i]);txt(cnt[i],bx+bW/2,bY+bH+3.5,5.5,[26,46,43],'center');txt(String(i+1),bx+bW/2,bY+bH+7,5,[107,140,135],'center');});
+      const aY=cy+cH-8;pdf.setDrawColor(200,224,219);pdf.setLineWidth(0.3);pdf.line(cx+3,aY-1,cx+cW-3,aY-1);
+      txt('Team Average',cx+4,aY+3.5,6,[107,140,135]);
+      if(avg!==null){rr(cx+cW-18,aY,15,7,2,avgB(avg));txt(avg.toFixed(1),cx+cW-10.5,aY+5,9,avgC(avg),'center',true);}
     });
-
-    // ── Page 2: ART Level ──
-    pdf.addPage();
-    pdf.setFillColor(223, 240, 235);
-    pdf.rect(0, 0, PW, PH, 'F');
-
-    // ART header
-    const artGrad = [232,160,32];
-    rr(MARGIN, MARGIN, PW-MARGIN*2, 18, 3, artGrad);
-    pdf.setFillColor(245,200,66);
-    pdf.rect(MARGIN, MARGIN+9, PW-MARGIN*2, 9, 'F');
-    // re-draw corners
-    rr(MARGIN, MARGIN, PW-MARGIN*2, 18, 3, artGrad);
-    txt('PI PLANNING — ART LEVEL CONFIDENCE VOTE', MARGIN+5, MARGIN+7.5, 12, [255,255,255], 'left', true);
-    txt(s.art + '  ·  ' + dateStr, MARGIN+5, MARGIN+13.5, 7, [255,240,200]);
-
-    const artVotes  = votesArray(s.votes['ART']);
-    const artTotal  = artVotes.length;
-    const artCnt    = [0,0,0,0,0];
-    artVotes.forEach(v => artCnt[v.score-1]++);
-    const artMx     = Math.max(...artCnt, 1);
-    const artAvg    = artTotal > 0 ? artVotes.reduce((a,v)=>a+v.score,0)/artTotal : null;
-
-    // Big ART card
-    const acx = MARGIN;
-    const acy = MARGIN + 22;
-    const acw = PW - MARGIN*2;
-    const ach = PH - acy - MARGIN;
-    rr(acx, acy, acw, ach, 4, [255,255,255]);
-
-    const artBarAreaY = acy + 8;
-    const artBarAreaH = ach - 30;
-    const artBarW     = (acw - 40) / 5 - 6;
-    const LABELS      = ['NO CONF.','LITTLE','GOOD','HIGH','V. HIGH'];
-
-    [0,1,2,3,4].forEach(i => {
-      const bx  = acx + 20 + i * (artBarW + 6);
-      const pct = artCnt[i] / artMx;
-      bar(bx, artBarAreaY, artBarW, artBarAreaH, pct, BAR_COLS[i]);
-
-      // count above bar
-      txt(artCnt[i], bx + artBarW/2, artBarAreaY - 2, 8, [26,46,43], 'center', true);
-      // score number
-      txt(String(i+1), bx + artBarW/2, artBarAreaY + artBarAreaH + 5, 10, BAR_COLS[i], 'center', true);
-      // label
-      txt(LABELS[i], bx + artBarW/2, artBarAreaY + artBarAreaH + 10, 6, [107,140,135], 'center');
-    });
-
-    // ART average
-    const artAvgY = acy + ach - 14;
-    pdf.setDrawColor(200,224,219);
-    pdf.setLineWidth(0.4);
-    pdf.line(acx+6, artAvgY-1, acx+acw-6, artAvgY-1);
-    txt('Overall ART Average', acx+8, artAvgY+5, 9, [107,140,135]);
-    if (artAvg !== null) {
-      const ac2 = avgColor(artAvg); const ab2 = avgBg(artAvg);
-      rr(acx+acw-42, artAvgY, 36, 12, 3, ab2);
-      txt(artAvg.toFixed(1), acx+acw-24, artAvgY+9, 16, ac2, 'center', true);
-    } else {
-      txt('No votes yet', acx+acw-40, artAvgY+6, 8, [107,140,135]);
-    }
-
-    // ART vote count
-    txt(artTotal + ' vote' + (artTotal!==1?'s':'') + ' recorded', acx+acw/2, artAvgY+5, 8, [107,140,135], 'center');
-
-    // Save
-    const fileName = `PI-Confidence-Vote-${activeSid}-${dateStr.replace(/ /g,'-')}.pdf`;
-    pdf.save(fileName);
-
-    if (typeof gtag !== 'undefined') {
-      gtag('event', 'download_pdf', { session_id: activeSid });
-    }
+    // Page 2: ART
+    pdf.addPage();pdf.setFillColor(223,240,235);pdf.rect(0,0,PW,PH,'F');
+    rr(M,M,PW-M*2,18,3,[232,160,32]);
+    txt('PI PLANNING — ART LEVEL CONFIDENCE VOTE',M+5,M+7.5,12,[255,255,255],'left',true);
+    txt(s.art+'  ·  '+dateStr,M+5,M+13.5,7,[255,240,200]);
+    const aVotes=votesArray(s.votes?.['ART']),aTot=aVotes.length;
+    const aCnt=[0,0,0,0,0];aVotes.forEach(v=>aCnt[v.score-1]++);
+    const aMx=Math.max(...aCnt,1),aAvg=aTot>0?aVotes.reduce((a,v)=>a+v.score,0)/aTot:null;
+    const acx=M,acy=M+22,acw=PW-M*2,ach=PH-acy-M;
+    rr(acx,acy,acw,ach,4,[255,255,255]);
+    const abY=acy+8,abH=ach-30,abW=(acw-40)/5-6;
+    const LBLS=['NO CONF.','LITTLE','GOOD','HIGH','V. HIGH'];
+    [0,1,2,3,4].forEach(i=>{const bx=acx+20+i*(abW+6);bar(bx,abY,abW,abH,aCnt[i]/aMx,BC2[i]);txt(aCnt[i],bx+abW/2,abY-2,8,[26,46,43],'center',true);txt(String(i+1),bx+abW/2,abY+abH+5,10,BC2[i],'center',true);txt(LBLS[i],bx+abW/2,abY+abH+10,6,[107,140,135],'center');});
+    const aAvgY=acy+ach-14;pdf.setDrawColor(200,224,219);pdf.setLineWidth(0.4);pdf.line(acx+6,aAvgY-1,acx+acw-6,aAvgY-1);
+    txt('Overall ART Average',acx+8,aAvgY+5,9,[107,140,135]);
+    if(aAvg!==null){rr(acx+acw-42,aAvgY,36,12,3,avgB(aAvg));txt(aAvg.toFixed(1),acx+acw-24,aAvgY+9,16,avgC(aAvg),'center',true);}
+    pdf.save(`PI-Confidence-Vote-${activeSid}-${dateStr.replace(/ /g,'-')}.pdf`);
+    if(typeof gtag!=='undefined') gtag('event','download_pdf',{session_id:activeSid});
     toast('PDF downloaded! 📄');
-
-  } catch(e) {
-    console.error(e);
-    toast('PDF error: ' + e.message);
-  } finally {
-    btn.textContent = '⬇️ Download PDF';
-    btn.disabled = false;
-  }
+  } catch(e){console.error(e);toast('PDF error: '+e.message);}
+  finally{btn.textContent='⬇️ Download PDF';btn.disabled=false;}
 }
 </script>
 </body>
