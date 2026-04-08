@@ -318,6 +318,8 @@ select.field{cursor:pointer;}
           <button class="btn btn-teal" style="width:auto;padding:10px 16px;font-size:13px;" onclick="addTeamToART()">+ Add</button>
         </div>
         <div style="margin-top:16px;">
+          <label class="lbl">Session Name (optional)</label>
+          <input class="field" type="text" id="sessionNameInput" placeholder="e.g. PI26.1" style="margin-bottom:8px;" />
           <button class="btn btn-or" onclick="startAdminSession()">🚀 Start New Session for this ART</button>
         </div>
       </div>
@@ -395,8 +397,12 @@ window.removeTeamFromART= removeTeamFromART;
 window.startAdminSession= startAdminSession;
 window.openSession      = openSession;
 window.closeSession     = closeSession;
+window.reopenSession    = reopenSession;
+window.deleteSession    = deleteSession;
 window.showAdminScreen  = showAdminScreen;
 window.switchTab        = switchTab;
+window.saveARTName      = saveARTName;
+window.saveTeamName     = saveTeamName;
 
 // ── Init ──
 document.addEventListener('DOMContentLoaded', async () => {
@@ -421,15 +427,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function handleJoinLink(sid) {
   const snap = await get(ref(db, `sessions/${sid}`));
   document.getElementById('loadingBox').style.display = 'none';
-  if (snap.exists() && snap.val().status !== 'closed') {
-    activeSid = sid;
+  if (snap.exists()) {
     const s = snap.val();
-    document.getElementById('qjArtName').textContent = s.art;
-    document.getElementById('qjSub').textContent = `You've been invited to vote in "${s.art}". Votes are anonymous.`;
-    showScreen('quickJoinScreen');
-  } else if (snap.exists() && snap.val().status === 'closed') {
-    showScreen('homeScreen');
-    toast('This voting session has been closed.');
+    activeSid = sid;
+    currentUser = 'anon_' + uid();
+    isHost = false; isAdminBoard = false;
+    if (s.status === 'closed') {
+      // Closed → show readonly board directly
+      isBoardClosed = true;
+      openBoard(sid);
+    } else {
+      isBoardClosed = false;
+      document.getElementById('qjArtName').textContent = s.sessionName ? `${s.sessionName} — ${s.art}` : s.art;
+      document.getElementById('qjSub').textContent = `You've been invited to vote. Votes are anonymous.`;
+      showScreen('quickJoinScreen');
+    }
   } else {
     showScreen('homeScreen');
     toast('Session not found. Ask the host for a new invite link.');
@@ -644,17 +656,35 @@ function renderARTDetail() {
   if (!selectedArtData) return;
   const card = document.getElementById('artDetailCard');
   card.style.display = 'block';
-  document.getElementById('artDetailTitle').textContent = `🏛️ ${selectedArtData.name} — Teams`;
   const teamList = document.getElementById('artTeamList');
   const teams = selectedArtData.teams || {};
   const keys = Object.keys(teams);
+
+  document.getElementById('artDetailTitle').innerHTML = `
+    <span style="flex:1;">🏛️ Teams in this ART</span>`;
+
+  // ART name edit row
+  const artNameRow = document.getElementById('artNameEditRow');
+  if (!artNameRow) {
+    const row = document.createElement('div');
+    row.id = 'artNameEditRow';
+    row.style.cssText = 'display:flex;gap:8px;margin-bottom:14px;';
+    row.innerHTML = `
+      <input class="field" type="text" id="artNameEditInput" style="margin-bottom:0;flex:1;" value="${selectedArtData.name}" placeholder="ART Name" />
+      <button class="btn btn-teal" style="width:auto;padding:10px 14px;font-size:13px;" onclick="saveARTName()">Save</button>`;
+    card.insertBefore(row, card.querySelector('.admin-card-title').nextSibling);
+  } else {
+    document.getElementById('artNameEditInput').value = selectedArtData.name;
+  }
+
   if (!keys.length) {
     teamList.innerHTML = '<div class="empty-state" style="padding:8px;">No teams yet.</div>';
     return;
   }
   teamList.innerHTML = keys.map(tid => `
-    <div class="trow">
-      <div class="field" style="margin-bottom:0;flex:1;background:var(--tl);border-color:var(--bo);cursor:default;">${teams[tid].name}</div>
+    <div class="trow" id="teamrow_${tid}">
+      <input class="field" type="text" style="margin-bottom:0;flex:1;" value="${teams[tid].name}" id="teamname_${tid}" onkeydown="if(event.key==='Enter')saveTeamName('${tid}')" />
+      <button class="icon-btn" style="background:var(--tl);color:var(--teal);width:32px;height:32px;" onclick="saveTeamName('${tid}')" title="Save">✓</button>
       <button class="btnx" onclick="removeTeamFromART('${tid}')" title="Remove">×</button>
     </div>`).join('');
 }
@@ -681,6 +711,30 @@ async function removeTeamFromART(tid) {
   renderARTDetail();
   renderARTList();
   toast('Team removed.');
+}
+
+async function saveARTName() {
+  const name = document.getElementById('artNameEditInput').value.trim();
+  if (!name || !selectedArtId || !adminUser) { toast('Enter a name!'); return; }
+  await update(ref(db, `arts/${adminUser.uid}/${selectedArtId}`), { name });
+  adminARTs[selectedArtId].name = name;
+  selectedArtData = adminARTs[selectedArtId];
+  renderARTList();
+  toast('ART name updated!');
+}
+
+async function saveTeamName(tid) {
+  const input = document.getElementById('teamname_' + tid);
+  if (!input) return;
+  const name = input.value.trim();
+  if (!name || !selectedArtId || !adminUser) { toast('Enter a name!'); return; }
+  await update(ref(db, `arts/${adminUser.uid}/${selectedArtId}/teams/${tid}`), { name });
+  adminARTs[selectedArtId].teams[tid].name = name;
+  selectedArtData = adminARTs[selectedArtId];
+  // visual feedback
+  input.style.borderColor = 'var(--v5)';
+  setTimeout(() => { input.style.borderColor = ''; }, 1200);
+  toast('Team name updated!');
 }
 
 // ── Admin Sessions ──
@@ -726,15 +780,20 @@ function renderSessionList() {
     const time = new Date(s.createdAt).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
     const totalVotes = Object.values(s.votes||{}).reduce((acc, v) => acc + Object.keys(v).length, 0);
     const isActive = s.status !== 'closed';
+    const displayName = s.sessionName ? `<strong>${s.sessionName}</strong> — ${s.art}` : s.art;
     return `<div class="session-item ${isActive?'':'closed'}">
       <div class="session-item-info">
-        <div class="session-item-title">${s.art} <span class="status-badge ${isActive?'active':'closed'}">${isActive?'● Active':'✓ Closed'}</span></div>
+        <div class="session-item-title">${displayName} <span class="status-badge ${isActive?'active':'closed'}">${isActive?'● Active':'✓ Closed'}</span></div>
         <div class="session-item-meta">${date} ${time} · ${s.teams?.length||0} teams · ${totalVotes} votes · ID: ${sid}</div>
       </div>
       <div class="session-item-actions">
-        ${isActive ? `<button class="btn btn-gh" style="padding:6px 12px;font-size:12px;width:auto;" onclick="copySessionLink('${sid}')">🔗 Copy Link</button>` : ''}
+        ${isActive ? `<button class="btn btn-gh" style="padding:6px 12px;font-size:12px;width:auto;" onclick="copySessionLink('${sid}')">🔗 Link</button>` : ''}
         <button class="btn btn-teal" style="padding:6px 12px;font-size:12px;width:auto;" onclick="openSession('${sid}')">👁 View</button>
-        ${isActive ? `<button class="btn btn-red" style="padding:6px 12px;font-size:12px;width:auto;" onclick="closeSession('${sid}')">⏹ Close</button>` : ''}
+        ${isActive
+          ? `<button class="btn btn-red" style="padding:6px 12px;font-size:12px;width:auto;" onclick="closeSession('${sid}')">⏹ Close</button>`
+          : `<button class="btn btn-gh" style="padding:6px 12px;font-size:12px;width:auto;color:var(--v5);border-color:var(--v5);" onclick="reopenSession('${sid}')">▶ Reopen</button>`
+        }
+        <button class="btn btn-red" style="padding:6px 12px;font-size:12px;width:auto;" onclick="deleteSession('${sid}')">🗑</button>
       </div>
     </div>`;
   }).join('');
@@ -746,6 +805,7 @@ async function startAdminSession() {
   const teamArr = Object.entries(teams).map(([id, t]) => ({id, name: t.name}));
   if (!teamArr.length) { toast('Add at least one team to this ART first!'); return; }
 
+  const sessionName = (document.getElementById('sessionNameInput')?.value || '').trim();
   const sid   = uid();
   const votes = {};
   teamArr.forEach(t => { votes[t.id] = {}; });
@@ -755,12 +815,14 @@ async function startAdminSession() {
     art: selectedArtData.name,
     artId: selectedArtId,
     adminUid: adminUser.uid,
+    sessionName: sessionName || null,
     teams: teamArr,
     votes,
     status: 'active',
     createdAt: Date.now()
   });
 
+  if (document.getElementById('sessionNameInput')) document.getElementById('sessionNameInput').value = '';
   currentUser = 'admin_' + uid();
   isHost = true; isAdminBoard = true; isBoardClosed = false;
   activeSid = sid;
@@ -782,6 +844,18 @@ async function closeSession(sid) {
   if (!confirm('Close this voting session? Participants will no longer be able to vote.')) return;
   await update(ref(db, `sessions/${sid}`), { status: 'closed' });
   toast('Session closed.');
+}
+
+async function reopenSession(sid) {
+  if (!confirm('Reopen this session? Participants will be able to vote again.')) return;
+  await update(ref(db, `sessions/${sid}`), { status: 'active' });
+  toast('Session reopened! ✅');
+}
+
+async function deleteSession(sid) {
+  if (!confirm('Permanently delete this session and all its votes? This cannot be undone.')) return;
+  await remove(ref(db, `sessions/${sid}`));
+  toast('Session deleted.');
 }
 
 window.copySessionLink = function(sid) {
@@ -830,19 +904,38 @@ function openBoard(sid) {
     if (!snap.exists()) { toast('Session ended.'); showScreen('homeScreen'); return; }
     sessionData = snap.val();
     isBoardClosed = sessionData.status === 'closed';
-    document.getElementById('boardTitle').textContent = sessionData.art + ' — PI Confidence Vote';
+
+    const displayTitle = sessionData.sessionName
+      ? `${sessionData.sessionName} — ${sessionData.art}`
+      : `${sessionData.art} — PI Confidence Vote`;
+    document.getElementById('boardTitle').textContent = displayTitle;
 
     if (isBoardClosed) {
       document.getElementById('boardSub').textContent = 'This session is closed.';
       document.getElementById('voterBannerTitle').textContent = '✓ Voting Closed';
-      document.getElementById('voterBannerSub').textContent   = 'This session has been closed by the admin. Results are final.';
+      document.getElementById('voterBannerSub').textContent   = 'This session has been closed. Results are final.';
       document.getElementById('boardScreen').classList.add('board-readonly');
       document.getElementById('shareBox').style.display = 'none';
-      document.getElementById('boardAdminActions').style.display = 'none';
+      // Admin: show reopen button
+      if (isAdminBoard) {
+        const adminAct = document.getElementById('boardAdminActions');
+        adminAct.style.display = 'flex';
+        adminAct.innerHTML = `<button class="btn btn-gh" style="padding:8px 14px;font-size:12px;width:auto;color:var(--v5);border-color:var(--v5);" onclick="reopenSession('${sid}')">▶ Reopen Session</button>`;
+      }
     } else {
       document.getElementById('boardSub').textContent = 'Voting in progress…';
       document.getElementById('voterBannerTitle').textContent = '🗳️ Voting in progress';
       document.getElementById('voterBannerSub').textContent   = 'Click any score button on a card to cast your vote — votes are anonymous';
+      document.getElementById('boardScreen').classList.remove('board-readonly');
+      if (isHost && !isBoardClosed) {
+        document.getElementById('shareBox').style.display = 'block';
+        document.getElementById('shareHint').textContent = buildShareUrl(sid);
+      }
+      if (isAdminBoard) {
+        const adminAct = document.getElementById('boardAdminActions');
+        adminAct.style.display = 'flex';
+        adminAct.innerHTML = `<button class="btn btn-red" style="padding:8px 14px;font-size:12px;width:auto;" onclick="closeSession('${sid}')">⏹ Close Session</button>`;
+      }
     }
 
     renderBoard(sessionData);
@@ -873,7 +966,7 @@ function buildCards(s) {
         <div class="bars">${[1,2,3,4,5].map(i=>`<div class="bcol"><div class="bnum" id="bn_${t.id}_${i}">0</div><div class="bw"><div class="bar" id="b_${t.id}_${i}" style="height:0%;background:${BC[i]}"></div></div><div class="blbl">${i}</div></div>`).join('')}</div>
         <div class="avg-row"><span class="avg-l">Team Average</span><span class="avg-v" id="avg_${t.id}">—</span></div>
         <div class="vote-section">
-          <div class="vote-section-label">Your vote for this team:</div>
+          <div class="vote-section-label">Your vote — tap again to remove:</div>
           <div class="inline-btns">${[1,2,3,4,5].map(i=>`<button class="ivb s${i}" id="ivb_${t.id}_${i}" onclick="castVote('${t.id}',${i})">${i}<span class="ivb-em">${EM[i]}</span></button>`).join('')}</div>
           <div class="vote-status" id="vs_${t.id}"></div>
         </div>
@@ -889,7 +982,7 @@ function buildCards(s) {
       <div class="art-bars">${[1,2,3,4,5].map(i=>`<div class="acol"><div class="anum" id="an_${i}">0</div><div class="abw"><div class="abar" id="ab_${i}" style="height:0%;background:${BC[i]}"></div></div><div class="albl">${['NO CONF.','LITTLE','GOOD','HIGH','V.HIGH'][i-1]}</div></div>`).join('')}</div>
       <div class="art-avg-row"><span class="art-avg-l">Overall ART Average</span><span class="art-avg-v" id="avg_ART">—</span></div>
       <div class="vote-section">
-        <div class="vote-section-label">Your vote for the overall PI plan (ART level):</div>
+        <div class="vote-section-label">Your ART vote — tap again to remove:</div>
         <div class="inline-btns">${[1,2,3,4,5].map(i=>`<button class="ivb s${i}" id="ivb_ART_${i}" onclick="castVote('ART',${i})">${i}<span class="ivb-em">${EM[i]}</span></button>`).join('')}</div>
         <div class="vote-status" id="vs_ART"></div>
       </div>
@@ -938,7 +1031,17 @@ function highlightMyVote(tid, votes) {
 async function castVote(tid, score) {
   if (!activeSid || !currentUser || isBoardClosed) return;
   const voterKey = currentUser.replace(/[.#$/\[\]]/g,'_');
-  await set(ref(db, `sessions/${activeSid}/votes/${tid}/${voterKey}`), {voter:currentUser, score});
+  const voteRef  = ref(db, `sessions/${activeSid}/votes/${tid}/${voterKey}`);
+
+  // Check if already voted this score → unvote
+  const existing = votesArray(sessionData?.votes?.[tid]).find(v => v.voter === currentUser);
+  if (existing && existing.score === score) {
+    await remove(voteRef);
+    toast('Vote removed ✕');
+    return;
+  }
+
+  await set(voteRef, {voter: currentUser, score});
   const tname = tid==='ART' ? (sessionData?.art||'ART')+' (ART)' : sessionData?.teams?.find(t=>t.id===tid)?.name||tid;
   toast(`Voted ${score} for ${tname} ✅`);
 }
